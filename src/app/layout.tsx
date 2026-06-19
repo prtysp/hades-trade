@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
+import { NotificationProvider } from "@/components/NotificationProvider";
 import { NavAuth } from "@/components/NavAuth";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeBody } from "@/components/ThemeBody";
@@ -41,7 +42,8 @@ export default function RootLayout({
         <ThemeProvider initialTheme="dracula">
           <ThemeStyles />
           <AuthProvider>
-            <ThemeBody>
+            <NotificationProvider>
+              <ThemeBody>
               <header className="border-b backdrop-blur-sm sticky top-0 z-50">
                 <nav className="mx-auto flex max-w-6xl items-center justify-between px-3 sm:px-4 py-2 sm:py-3">
                   <Link href="/" className="text-lg sm:text-xl font-bold text-amber-400 shrink-0">
@@ -64,7 +66,8 @@ export default function RootLayout({
               <footer className="border-t py-3 sm:py-4 text-center text-xs opacity-40">
                 Hades Star Market — Trade artifacts across the galaxy
               </footer>
-            </ThemeBody>
+              </ThemeBody>
+            </NotificationProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

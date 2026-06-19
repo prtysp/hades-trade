@@ -184,7 +184,9 @@ export async function PATCH(
       data: {
         playerId: interest.playerId,
         listingId: interest.listingId,
-        message: `✅ Your interest was accepted${tradedLabels ? `! Traded: ${tradedLabels}` : "!"} — exchange artifacts in-game, then confirm the trade.`,
+        tradeId: trade.id,
+        type: "INTEREST_ACCEPTED",
+        message: `✅ Your interest was accepted${tradedLabels ? `! Traded: ${tradedLabels}` : "!"} — exchange artifacts in-game, then acknowledge the trade.`,
       },
     });
 
@@ -193,7 +195,9 @@ export async function PATCH(
       data: {
         playerId: interest.listing.playerId,
         listingId: interest.listingId,
-        message: `Trade initiated with ${interest.player.username}. Exchange artifacts in-game and confirm to complete.`,
+        tradeId: trade.id,
+        type: "TRADE_CONFIRMATION_NEEDED",
+        message: `Trade initiated with ${interest.player.username}. Exchange artifacts in-game and acknowledge to complete.`,
       },
     });
 
@@ -203,6 +207,7 @@ export async function PATCH(
       data: {
         playerId: interest.playerId,
         listingId: interest.listingId,
+        type: "GENERAL",
         message: `Your interest was rejected by the lister.`,
       },
     });

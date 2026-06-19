@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { notifyRefresh } from "@/components/NotificationProvider";
 
 const categoryEmojis: Record<string, string> = {
   COMBAT: "⚔️", TRANSPORT: "🚀", MINING: "⛏️", DRONE: "🤖", WEAPON: "🔫", SHIELD: "🛡️",
@@ -77,6 +78,7 @@ export default function TradeCard({ trade, currentPlayerId }: TradeCardProps) {
       });
       if (res.ok) {
         router.refresh();
+        notifyRefresh();
       }
     } catch { /* */ } finally {
       setLoading(false);

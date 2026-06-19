@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { notifyRefresh } from "@/components/NotificationProvider";
 
 const categoryEmojis: Record<string, string> = {
   COMBAT: "⚔️",
@@ -116,6 +117,7 @@ export default function InterestsList({ listingId, listingArtifacts }: Interests
       if (res.ok) {
         router.refresh();
         fetchInterests();
+        notifyRefresh();
       }
     } catch { /* */ }
   };

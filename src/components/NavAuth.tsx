@@ -1,10 +1,12 @@
 "use client";
 
 import { useAuth } from "./AuthProvider";
+import { useNotifications } from "./NotificationProvider";
 import Link from "next/link";
 
 export function NavAuth() {
   const { player, loading, logout } = useAuth();
+  const { unreadCount } = useNotifications();
 
   if (loading) {
     return <span className="text-xs text-[var(--text-dim)]">…</span>;
@@ -38,10 +40,15 @@ export function NavAuth() {
     <div className="flex items-center gap-2 sm:gap-3 shrink-0">
       <Link
         href="/notifications"
-        className="opacity-70 hover:opacity-100 transition text-sm"
+        className="relative opacity-70 hover:opacity-100 transition text-sm"
         title="Notifications"
       >
         🔔
+        {unreadCount > 0 && (
+          <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--red)] text-[9px] font-bold text-white min-w-[16px] px-0.5">
+            {unreadCount > 9 ? "9+" : unreadCount}
+          </span>
+        )}
       </Link>
       <Link
         href="/settings"

@@ -59,17 +59,31 @@ model PreferenceCategory {
 }
 
 model Notification {
-  id        String   @id @default(cuid())
+  id        String           @id @default(cuid())
   playerId  String
-  player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
-  listingId String
-  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  player    Player           @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  listingId String?
+  listing   Listing?         @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  tradeId   String?
+  trade     Trade?           @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  type      NotificationType @default(GENERAL)
   message   String
-  read      Boolean  @default(false)
-  createdAt DateTime @default(now())
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
 
   @@index([playerId])
   @@index([read])
+  @@index([tradeId])
+}
+
+enum NotificationType {
+  GENERAL
+  INTEREST_EXPRESSED
+  INTEREST_ACCEPTED
+  TRADE_CONFIRMATION_NEEDED
+  TRADE_CONFIRMED
+  TRADE_COMPLETED
+  TRADE_CANCELLED
 }
 
 model Artifact {
@@ -185,6 +199,7 @@ model Trade {
   completedAt     DateTime?
   createdAt       DateTime      @default(now())
   tradeArtifacts  TradeArtifact[]
+  notifications    Notification[]
 
   @@index([listerId])
   @@index([traderId])

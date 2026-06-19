@@ -24,6 +24,20 @@ export async function GET(req: NextRequest) {
           },
         },
       },
+      trade: {
+        select: {
+          id: true,
+          listingId: true,
+          listerId: true,
+          traderId: true,
+          status: true,
+          createdAt: true,
+          completedAt: true,
+          lister: { select: { id: true, username: true } },
+          trader: { select: { id: true, username: true } },
+          tradeArtifacts: true,
+        },
+      },
     },
     orderBy: { createdAt: "desc" },
     take: 50,
@@ -34,7 +48,7 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   const body = await req.json();
-  const { notificationId, playerId, markAllRead } = body;
+  const { notificationId, playerId, markAllRead, acknowledgeTradeId } = body;
 
   if (markAllRead && playerId) {
     await prisma.notification.updateMany({

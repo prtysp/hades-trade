@@ -174,6 +174,7 @@ export async function POST(req: NextRequest) {
       data: {
         playerId: listingData.playerId,
         listingId,
+        type: "INTEREST_EXPRESSED",
         message: parts.join(" · "),
       },
     });

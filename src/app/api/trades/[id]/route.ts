@@ -100,6 +100,8 @@ export async function PATCH(
       data: {
         playerId: otherPlayerId,
         listingId: trade.listingId,
+        tradeId: trade.id,
+        type: "TRADE_CANCELLED",
         message: `Trade was cancelled by ${player.username}. Your artifacts have been restored to your inventory.`,
       },
     });
@@ -146,11 +148,15 @@ export async function PATCH(
         {
           playerId: trade.listerId,
           listingId: trade.listingId,
+          tradeId: trade.id,
+          type: "TRADE_COMPLETED",
           message: `✅ Trade with ${trade.trader.username} completed! Artifacts exchanged in-game.`,
         },
         {
           playerId: trade.traderId,
           listingId: trade.listingId,
+          tradeId: trade.id,
+          type: "TRADE_COMPLETED",
           message: `✅ Trade with ${trade.lister.username} completed! Artifacts exchanged in-game.`,
         },
       ],
@@ -163,7 +169,9 @@ export async function PATCH(
       data: {
         playerId: otherPlayerId,
         listingId: trade.listingId,
-        message: `${player.username} confirmed the trade. Exchange artifacts in-game and confirm to complete.`,
+        tradeId: trade.id,
+        type: "TRADE_CONFIRMATION_NEEDED",
+        message: `${player.username} confirmed the trade. Exchange artifacts in-game and acknowledge to complete.`,
       },
     });
   }

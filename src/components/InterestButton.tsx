@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArtifactCategory } from "@prisma/client";
+import { notifyRefresh } from "@/components/NotificationProvider";
 
 const categoryEmojis: Record<ArtifactCategory, string> = {
   COMBAT: "⚔️",
@@ -111,6 +112,7 @@ export default function InterestButton({ listingId, listingArtifacts, priceType 
       setSuccess(true);
       setShowForm(false);
       router.refresh();
+      notifyRefresh();
     } catch (err: unknown) {
       console.error("Express interest catch:", err);
       setError(err instanceof Error ? err.message : "Something went wrong");
