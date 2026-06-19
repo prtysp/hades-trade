@@ -11,6 +11,8 @@ import CompressedArtifactBadge, { type ArtifactGroup } from "@/components/Compre
 import TradeCard from "@/components/TradeCard";
 import ArchiveSection from "@/components/ArchiveSection";
 
+export const dynamic = "force-dynamic";
+
 function timeUntilExpiry(expiresAt: Date): string {
   const diff = expiresAt.getTime() - Date.now();
   if (diff <= 0) return "Expired";
@@ -127,31 +129,31 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
     <div>
       <Link
         href="/players"
-        className="mb-3 inline-block text-sm text-slate-400 hover:text-amber-400 transition"
+        className="mb-3 inline-block text-sm text-[var(--text-muted)] hover:text-[var(--accent-text)] transition"
       >
         ← Back to Players
       </Link>
 
       {/* Player header */}
-      <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-4 sm:p-6">
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 sm:p-6">
         <div className="flex items-center gap-3 sm:gap-4">
-          <div className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-amber-500/20 text-amber-400 font-bold text-xl sm:text-2xl shrink-0">
+          <div className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-[var(--accent-bg)] text-[var(--accent-text)] font-bold text-xl sm:text-2xl shrink-0">
             {player.username[0].toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl sm:text-2xl font-bold text-white truncate">
+            <h1 className="text-xl sm:text-2xl font-bold text-[var(--text)] truncate">
               {player.username}
             </h1>
-            <p className="text-sm text-slate-400">{player.corporation}</p>
+            <p className="text-sm text-[var(--text-muted)]">{player.corporation}</p>
           </div>
           {isOwnProfile && (
             <Link
               href="/notifications"
-              className="relative rounded-lg border border-slate-600 bg-slate-800 px-3 py-1.5 text-sm text-slate-300 hover:border-slate-500 transition shrink-0"
+              className="relative rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1.5 text-sm text-[var(--text-muted)] hover:border-[var(--border-hover)] transition shrink-0"
             >
               🔔
               {unreadCount > 0 && (
-                <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--red)] text-[10px] font-bold text-white">
                   {unreadCount}
                 </span>
               )}
@@ -160,67 +162,41 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
         </div>
       </div>
 
-      {/* Add Artifact */}
-      {isOwnProfile && (
-        <div className="mt-6 rounded-xl border border-slate-700 bg-slate-800/50 p-4 sm:p-6">
-          <h2 className="text-lg font-semibold text-white mb-3">
-            Add Artifact to Inventory
+      {/* ── Pending Trades (own profile only) ── */}
+      {isOwnProfile && pendingTrades.length > 0 && (
+        <div className="mt-6">
+          <h2 className="text-lg font-semibold text-[var(--text)] mb-3">
+            Pending Trades ({pendingTrades.length})
           </h2>
-          <AddArtifactForm playerId={id} />
+          <div className="space-y-3">
+            {pendingTrades.map((trade) => (
+              <TradeCard
+                key={trade.id}
+                trade={trade}
+                currentPlayerId={currentPlayer!.id}
+              />
+            ))}
+          </div>
         </div>
       )}
 
-      {/* Preferences */}
-      {isOwnProfile && (
-        <div className="mt-6 rounded-xl border border-slate-700 bg-slate-800/50 p-4 sm:p-6">
-          <h2 className="text-lg font-semibold text-white mb-3">
-            Trade Preference
-          </h2>
-          {summary ? (
-            <div className="mb-3 text-sm text-slate-400">
-              <span className="text-amber-400">★</span> {summary}
-            </div>
-          ) : (
-            <p className="mb-3 text-sm text-slate-500">No preference set.</p>
-          )}
-          <PreferenceForm
-            playerId={id}
-            initial={
-              player.preference
-                ? {
-                    categoryThresholds:
-                      player.preference.categoryThresholds.map((t) => ({
-                        category: t.category,
-                        minBonusPct: t.minBonusPct,
-                        minLevel: t.minLevel,
-                      })),
-                  }
-                : undefined
-            }
-          />
-        </div>
-      )}
-
-      {/* Create Listing */}
-      {isOwnProfile && (
-        <div className="mt-6 rounded-xl border border-slate-700 bg-slate-800/50 p-4 sm:p-6">
-          <h2 className="text-lg font-semibold text-white mb-3">
-            Create New Listing
-          </h2>
-          <CreateListingForm
-            playerId={id}
-            key={activeArtifacts.length}
-          />
-        </div>
-      )}
-
-      {/* Active Artifacts — compressed */}
+      {/* ── Artifacts section ── */}
       <div className="mt-6">
-        <h2 className="text-lg font-semibold text-white mb-3">
-          Artifacts ({activeArtifacts.length})
-        </h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold text-[var(--text)]">
+            Artifacts ({activeArtifacts.length})
+          </h2>
+        </div>
+
+        {isOwnProfile && (
+          <div className="mb-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 sm:p-5">
+            <h3 className="text-sm font-semibold text-[var(--text)] mb-3">Add Artifact to Inventory</h3>
+            <AddArtifactForm playerId={id} />
+          </div>
+        )}
+
         {artifactGroups.length === 0 ? (
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-[var(--text-dim)]">
             {isOwnProfile
               ? "No artifacts yet. Add some above!"
               : "No artifacts yet."}
@@ -237,31 +213,24 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
         )}
       </div>
 
-      {/* Pending Trades */}
-      {isOwnProfile && pendingTrades.length > 0 && (
-        <div className="mt-6">
-          <h2 className="text-lg font-semibold text-white mb-3">
-            Pending Trades ({pendingTrades.length})
-          </h2>
-          <div className="space-y-3">
-            {pendingTrades.map((trade) => (
-              <TradeCard
-                key={trade.id}
-                trade={trade}
-                currentPlayerId={currentPlayer!.id}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Active Listings */}
+      {/* ── Active Listings section ── */}
       <div className="mt-6">
-        <h2 className="text-lg font-semibold text-white mb-3">
+        <h2 className="text-lg font-semibold text-[var(--text)] mb-3">
           Active Listings ({player.listings.length})
         </h2>
+
+        {isOwnProfile && (
+          <div className="mb-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 sm:p-5">
+            <h3 className="text-sm font-semibold text-[var(--text)] mb-3">Create New Listing</h3>
+            <CreateListingForm
+              playerId={id}
+              key={activeArtifacts.length}
+            />
+          </div>
+        )}
+
         {player.listings.length === 0 ? (
-          <p className="text-sm text-slate-500">No active listings.</p>
+          <p className="text-sm text-[var(--text-dim)]">No active listings.</p>
         ) : (
           <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
             {player.listings.map((listing) => (
@@ -275,7 +244,40 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
         )}
       </div>
 
-      {/* Archive / History Section */}
+      {/* ── Trade Preferences (own profile only) ── */}
+      {isOwnProfile && (
+        <div className="mt-6">
+          <h2 className="text-lg font-semibold text-[var(--text)] mb-3">
+            Trade Preferences
+          </h2>
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 sm:p-6">
+            {summary ? (
+              <div className="mb-3 text-sm text-[var(--text-muted)]">
+                <span className="text-[var(--accent-text)]">★</span> {summary}
+              </div>
+            ) : (
+              <p className="mb-3 text-sm text-[var(--text-dim)]">No preference set.</p>
+            )}
+            <PreferenceForm
+              playerId={id}
+              initial={
+                player.preference
+                  ? {
+                      categoryThresholds:
+                        player.preference.categoryThresholds.map((t) => ({
+                          category: t.category,
+                          minBonusPct: t.minBonusPct,
+                          minLevel: t.minLevel,
+                        })),
+                    }
+                  : undefined
+              }
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ── Archive / History Section ── */}
       {isOwnProfile && (
         <ArchiveSection
           archivedArtifacts={archivedArtifacts}

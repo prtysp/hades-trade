@@ -38,11 +38,11 @@ interface TradeCardProps {
 }
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
-  PENDING:         { label: "Awaiting Confirmation", color: "text-[var(--amber)]", bg: "bg-[var(--amber-bg)]" },
-  LISTER_CONFIRMED: { label: "Lister Confirmed", color: "text-[var(--blue)]", bg: "bg-[var(--blue-bg)]" },
-  TRADER_CONFIRMED: { label: "Trader Confirmed", color: "text-[var(--blue)]", bg: "bg-[var(--blue-bg)]" },
-  COMPLETED:       { label: "Completed", color: "text-[var(--green)]", bg: "bg-[var(--green-bg)]" },
-  CANCELLED:       { label: "Cancelled", color: "text-[var(--red)]", bg: "bg-[var(--red-bg)]" },
+  PENDING:          { label: "Awaiting Your Confirmation", color: "text-[var(--amber)]", bg: "bg-[var(--amber-bg)]" },
+  LISTER_CONFIRMED:  { label: "Lister Confirmed — Awaiting You", color: "text-[var(--blue)]", bg: "bg-[var(--blue-bg)]" },
+  TRADER_CONFIRMED:  { label: "Trader Confirmed — Awaiting You", color: "text-[var(--blue)]", bg: "bg-[var(--blue-bg)]" },
+  COMPLETED:        { label: "Completed", color: "text-[var(--green)]", bg: "bg-[var(--green-bg)]" },
+  CANCELLED:        { label: "Cancelled", color: "text-[var(--red)]", bg: "bg-[var(--red-bg)]" },
 };
 
 export default function TradeCard({ trade, currentPlayerId }: TradeCardProps) {
@@ -59,8 +59,13 @@ export default function TradeCard({ trade, currentPlayerId }: TradeCardProps) {
   );
 
   const status = statusConfig[trade.status];
-  const canConfirm = trade.status === "PENDING" || trade.status === (isLister ? "TRADER_CONFIRMED" : "LISTER_CONFIRMED");
+  const canConfirm =
+    (isLister && (trade.status === "PENDING" || trade.status === "TRADER_CONFIRMED")) ||
+    (!isLister && (trade.status === "PENDING" || trade.status === "LISTER_CONFIRMED"));
   const canCancel = trade.status !== "COMPLETED" && trade.status !== "CANCELLED";
+  const awaitingOther =
+    (isLister && trade.status === "LISTER_CONFIRMED") ||
+    (!isLister && trade.status === "TRADER_CONFIRMED");
 
   const handleAction = async (action: "confirm" | "cancel") => {
     setLoading(true);
@@ -136,32 +141,38 @@ export default function TradeCard({ trade, currentPlayerId }: TradeCardProps) {
 
       {/* Action buttons for pending trades */}
       {trade.status !== "COMPLETED" && trade.status !== "CANCELLED" && (
-        <div className="mt-3 flex gap-2">
+        <div className="mt-3 space-y-2">
           {canConfirm && (
-            <button
-              onClick={() => handleAction("confirm")}
-              disabled={loading}
-              className="rounded-lg bg-[var(--green-bg)] px-3 py-1.5 text-xs font-semibold text-[var(--green)] hover:opacity-80 transition disabled:opacity-50"
-            >
-              {trade.status === "PENDING" ? "✓ Confirm Trade" : "✓ Complete Trade"}
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleAction("confirm")}
+                disabled={loading}
+                className="rounded-lg bg-[var(--green-bg)] px-3 py-1.5 text-xs font-semibold text-[var(--green)] hover:opacity-80 transition disabled:opacity-50"
+              >
+                {trade.status === "PENDING" ? "✓ I've Exchanged In-Game" : "✓ Complete Trade"}
+              </button>
+              {canCancel && (
+                <button
+                  onClick={() => handleAction("cancel")}
+                  disabled={loading}
+                  className="rounded-lg bg-[var(--red-bg)] px-3 py-1.5 text-xs font-semibold text-[var(--red)] hover:opacity-80 transition disabled:opacity-50"
+                >
+                  ✕ Cancel
+                </button>
+              )}
+            </div>
           )}
-          {canCancel && (
-            <button
-              onClick={() => handleAction("cancel")}
-              disabled={loading}
-              className="rounded-lg bg-[var(--red-bg)] px-3 py-1.5 text-xs font-semibold text-[var(--red)] hover:opacity-80 transition disabled:opacity-50"
-            >
-              ✕ Cancel
-            </button>
+          {awaitingOther && (
+            <p className="text-xs text-[var(--text-dim)]">
+              ⏳ You confirmed. Waiting for {otherPlayer.username} to confirm the in-game exchange.
+            </p>
+          )}
+          {trade.status === "PENDING" && (
+            <p className="text-xs text-[var(--text-dim)]">
+              💡 Exchange artifacts in-game, then confirm here. Both players must confirm to complete the trade.
+            </p>
           )}
         </div>
-      )}
-
-      {trade.status === "PENDING" && (
-        <p className="mt-2 text-xs text-[var(--text-dim)]">
-          💡 Exchange artifacts in-game, then both players confirm to complete the trade.
-        </p>
       )}
     </div>
   );

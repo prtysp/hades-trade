@@ -22,7 +22,11 @@ export async function PATCH(
 
   const trade = await prisma.trade.findUnique({
     where: { id },
-    include: { tradeArtifacts: true },
+    include: {
+      tradeArtifacts: true,
+      lister: { select: { id: true, username: true } },
+      trader: { select: { id: true, username: true } },
+    },
   });
 
   if (!trade) {
@@ -66,7 +70,7 @@ export async function PATCH(
             artifactId: ga.artifactId,
             role: "OFFERING",
           },
-        }).catch(() => {}); // Ignore duplicate errors
+        }).catch(() => {});
       }
     }
 
@@ -96,7 +100,7 @@ export async function PATCH(
       data: {
         playerId: otherPlayerId,
         listingId: trade.listingId,
-        message: `Trade was cancelled by ${player.username}. Your artifacts have been restored.`,
+        message: `Trade was cancelled by ${player.username}. Your artifacts have been restored to your inventory.`,
       },
     });
 
@@ -136,29 +140,30 @@ export async function PATCH(
       where: { id: { in: allArtifactIds } },
     });
 
-    // Notify both players
+    // Notify both players that trade is fully complete
     await prisma.notification.createMany({
       data: [
         {
           playerId: trade.listerId,
           listingId: trade.listingId,
-          message: `Trade completed! Artifacts have been exchanged.`,
+          message: `✅ Trade with ${trade.trader.username} completed! Artifacts exchanged in-game.`,
         },
         {
           playerId: trade.traderId,
           listingId: trade.listingId,
-          message: `Trade completed! Artifacts have been exchanged.`,
+          message: `✅ Trade with ${trade.lister.username} completed! Artifacts exchanged in-game.`,
         },
       ],
     });
   } else {
-    // Notify the other party that one side confirmed
+    // First confirmation — notify the other player
     const otherPlayerId = isLister ? trade.traderId : trade.listerId;
+    const otherPlayerName = isLister ? trade.trader.username : trade.lister.username;
     await prisma.notification.create({
       data: {
         playerId: otherPlayerId,
         listingId: trade.listingId,
-        message: `${player.username} confirmed the trade. Confirm to complete the exchange.`,
+        message: `${player.username} confirmed the trade. Exchange artifacts in-game and confirm to complete.`,
       },
     });
   }

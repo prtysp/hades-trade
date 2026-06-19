@@ -29,6 +29,7 @@ export async function PATCH(
         },
       },
       interestArtifacts: true,
+      player: { select: { id: true, username: true } },
     },
   });
 
@@ -183,7 +184,16 @@ export async function PATCH(
       data: {
         playerId: interest.playerId,
         listingId: interest.listingId,
-        message: `Your interest was accepted${tradedLabels ? `! Traded: ${tradedLabels}` : "!"} — confirm when the in-game exchange is complete.`,
+        message: `✅ Your interest was accepted${tradedLabels ? `! Traded: ${tradedLabels}` : "!"} — exchange artifacts in-game, then confirm the trade.`,
+      },
+    });
+
+    // Also notify the lister that a trade has been initiated
+    await prisma.notification.create({
+      data: {
+        playerId: interest.listing.playerId,
+        listingId: interest.listingId,
+        message: `Trade initiated with ${interest.player.username}. Exchange artifacts in-game and confirm to complete.`,
       },
     });
 
