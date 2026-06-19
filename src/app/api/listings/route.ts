@@ -109,6 +109,9 @@ export async function POST(req: NextRequest) {
   }
 
   const days = expiresInDays ?? 1;
+  if (days <= 0) {
+    return NextResponse.json({ error: "expiresInDays must be greater than 0" }, { status: 400 });
+  }
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + days);
 

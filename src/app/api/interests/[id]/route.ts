@@ -13,7 +13,7 @@ export async function PATCH(
 
   const { id } = await params;
   const body = await req.json();
-  const { status } = body;
+  const { status, offeringArtifactIds } = body;
 
   if (!["ACCEPTED", "REJECTED"].includes(status)) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
@@ -21,7 +21,14 @@ export async function PATCH(
 
   const interest = await prisma.interest.findUnique({
     where: { id },
-    include: { listing: { select: { playerId: true } } },
+    include: {
+      listing: {
+        include: {
+          listingArtifacts: { include: { artifact: true } },
+        },
+      },
+      interestArtifacts: true,
+    },
   });
 
   if (!interest) {
@@ -36,11 +43,66 @@ export async function PATCH(
     data: { status },
   });
 
-  // If accepted, mark the listing as completed
   if (status === "ACCEPTED") {
-    await prisma.listing.update({
-      where: { id: interest.listingId },
-      data: { status: "COMPLETED" },
+    // Determine which artifacts from the listing are being traded
+    // Use the artifacts specified by the lister during accept, or fall back to what the interested player wanted
+    const tradedOfferingIds =
+      offeringArtifactIds && offeringArtifactIds.length > 0
+        ? offeringArtifactIds
+        : interest.interestArtifacts
+            .filter((ia) => ia.role === "INTERESTED_IN")
+            .map((ia) => ia.artifactId);
+
+    // Remove traded artifacts from the listing
+    if (tradedOfferingIds.length > 0) {
+      await prisma.listingArtifact.deleteMany({
+        where: {
+          listingId: interest.listingId,
+          artifactId: { in: tradedOfferingIds },
+        },
+      });
+    }
+
+    // Check remaining offering artifacts
+    const remainingOfferings = await prisma.listingArtifact.count({
+      where: { listingId: interest.listingId, role: "OFFERING" },
+    });
+
+    if (remainingOfferings === 0) {
+      // All artifacts traded — mark listing as completed
+      await prisma.listing.update({
+        where: { id: interest.listingId },
+        data: { status: "COMPLETED" },
+      });
+    } else {
+      // Partial trade — listing stays active with remaining artifacts
+      await prisma.listing.update({
+        where: { id: interest.listingId },
+        data: { updatedAt: new Date() },
+      });
+    }
+
+    // Notify the interested player that their interest was accepted
+    const tradedLabels = interest.listing.listingArtifacts
+      .filter((la) => tradedOfferingIds.includes(la.artifactId))
+      .map((la) => `${la.artifact.category} +${la.artifact.bonusPct}% Lv.${la.artifact.level}`)
+      .join(", ");
+
+    await prisma.notification.create({
+      data: {
+        playerId: interest.playerId,
+        listingId: interest.listingId,
+        message: `Your interest was accepted${tradedLabels ? `! Traded: ${tradedLabels}` : "!"}`,
+      },
+    });
+  } else if (status === "REJECTED") {
+    // Notify the interested player that their interest was rejected
+    await prisma.notification.create({
+      data: {
+        playerId: interest.playerId,
+        listingId: interest.listingId,
+        message: `Your interest was rejected by the lister.`,
+      },
     });
   }
 

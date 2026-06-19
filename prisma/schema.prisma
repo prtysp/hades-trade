@@ -104,7 +104,7 @@ model Listing {
   donationAmount   Float?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
-  expiresAt        DateTime  @default(now())
+  expiresAt        DateTime
   archivedAt       DateTime?
   listingArtifacts ListingArtifact[]
   notifications    Notification[]
@@ -151,11 +151,30 @@ model Interest {
   message     String?
   status      InterestStatus @default(PENDING)
   createdAt   DateTime @default(now())
+  interestArtifacts InterestArtifact[]
 
   @@index([listingId])
   @@index([playerId])
   @@unique([listingId, playerId])
 }
+
+model InterestArtifact {
+  id          String          @id @default(cuid())
+  interestId  String
+  interest    Interest        @relation(fields: [interestId], references: [id], onDelete: Cascade)
+  artifactId  String
+  role        InterestArtifactRole
+
+  @@index([interestId])
+  @@index([artifactId])
+  @@unique([interestId, artifactId, role])
+}
+
+enum InterestArtifactRole {
+  INTERESTED_IN
+  OFFERING_IN_RETURN
+}
+
 
 enum InterestStatus {
   PENDING

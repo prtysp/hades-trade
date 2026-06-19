@@ -26,6 +26,7 @@ export async function GET(req: NextRequest) {
       where: { listingId },
       include: {
         player: { select: { id: true, username: true, corporation: true } },
+        interestArtifacts: true,
       },
       orderBy: { createdAt: "desc" },
     });
@@ -38,6 +39,7 @@ export async function GET(req: NextRequest) {
     include: {
       player: { select: { id: true, username: true, corporation: true } },
       listing: { select: { id: true, description: true, priceType: true } },
+      interestArtifacts: true,
     },
     orderBy: { createdAt: "desc" },
   });
@@ -52,7 +54,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { listingId, message } = body;
+  const { listingId, message, offeringArtifactIds, wantingArtifactIds } = body;
 
   if (!listingId) {
     return NextResponse.json({ error: "listingId is required" }, { status: 400 });
@@ -81,16 +83,70 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "You already expressed interest in this listing" }, { status: 409 });
   }
 
+  // Build interest artifacts data
+  const interestArtifacts: { artifactId: string; role: "INTERESTED_IN" | "OFFERING_IN_RETURN" }[] = [];
+  if (offeringArtifactIds && offeringArtifactIds.length > 0) {
+    for (const id of offeringArtifactIds) {
+      interestArtifacts.push({ artifactId: id, role: "INTERESTED_IN" });
+    }
+  }
+  if (wantingArtifactIds && wantingArtifactIds.length > 0) {
+    for (const id of wantingArtifactIds) {
+      interestArtifacts.push({ artifactId: id, role: "OFFERING_IN_RETURN" });
+    }
+  }
+
   const interest = await prisma.interest.create({
     data: {
       listingId,
       playerId: player.id,
       message: message?.trim() || null,
+      ...(interestArtifacts.length > 0
+        ? {
+            interestArtifacts: {
+              create: interestArtifacts,
+            },
+          }
+        : {}),
     },
     include: {
       player: { select: { id: true, username: true, corporation: true } },
+      interestArtifacts: true,
     },
   });
+
+  // Notify the listing owner that someone expressed interest
+  const listingData = await prisma.listing.findUnique({
+    where: { id: listingId },
+    include: {
+      listingArtifacts: { include: { artifact: true } },
+    },
+  });
+
+  if (listingData) {
+    const interestedItems = (offeringArtifactIds as string[] || []).map((id: string) => {
+      const la = listingData.listingArtifacts.find((a) => a.artifactId === id);
+      return la ? `${la.artifact.category} +${la.artifact.bonusPct}% Lv.${la.artifact.level}` : id;
+    });
+    const offeringItems = (wantingArtifactIds as string[] || []).map((id: string) => {
+      const la = listingData.listingArtifacts.find((a) => a.artifactId === id);
+      return la ? `${la.artifact.category} +${la.artifact.bonusPct}% Lv.${la.artifact.level}` : id;
+    });
+
+    const parts: string[] = [];
+    parts.push(`${player.username} expressed interest in your listing`);
+    if (interestedItems.length > 0) parts.push(`interested in: ${interestedItems.join(", ")}`);
+    if (offeringItems.length > 0) parts.push(`offering: ${offeringItems.join(", ")}`);
+    if (message?.trim()) parts.push(`message: "${message.trim()}"`);
+
+    await prisma.notification.create({
+      data: {
+        playerId: listingData.playerId,
+        listingId,
+        message: parts.join(" · "),
+      },
+    });
+  }
 
   return NextResponse.json(interest, { status: 201 });
 }

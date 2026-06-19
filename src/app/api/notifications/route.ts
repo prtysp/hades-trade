@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     include: {
       listing: {
         include: {
-          player: { select: { username: true } },
+          player: { select: { id: true, username: true } },
           listingArtifacts: {
             include: { artifact: true },
           },

@@ -11,7 +11,7 @@ interface Notification {
   createdAt: string;
   listing: {
     id: string;
-    player: { username: string };
+    player: { id: string; username: string };
     listingArtifacts: {
       artifact: { category: string; bonusPct: number; level: number };
       role: string;
@@ -137,13 +137,19 @@ export default function NotificationsPage() {
                   <p className={`text-sm ${n.read ? "text-[var(--text-muted)]" : "text-[var(--text)]"}`}>
                     {n.message}
                   </p>
-                  <div className="mt-2 flex items-center gap-3">
+                  <div className="mt-2 flex items-center gap-3 flex-wrap">
                     <Link
                       href={`/listings/${n.listing.id}`}
                       className="text-xs sm:text-sm text-[var(--amber)] hover:text-[var(--accent-text)]"
                       onClick={() => !n.read && markAsRead(n.id)}
                     >
                       View listing →
+                    </Link>
+                    <Link
+                      href={`/players/${n.listing.player.id}`}
+                      className="text-xs sm:text-sm text-[var(--text-muted)] hover:text-[var(--text)]"
+                    >
+                      by {n.listing.player.username}
                     </Link>
                     <span className="text-xs text-[var(--text-dim)]">
                       {new Date(n.createdAt).toLocaleString()}
