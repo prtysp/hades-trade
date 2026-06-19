@@ -1,0 +1,169 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Player {
+  id            String     @id @default(cuid())
+  username      String     @unique
+  passwordHash  String  @default("")
+  corporation   String
+  theme         String     @default("dracula")
+  font          String     @default("sans")
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  artifacts     Artifact[]
+  listings      Listing[]
+  preference    Preference?
+  notifications Notification[]
+  sessions      Session[]
+  interests     Interest[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  playerId  String
+  player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([playerId])
+}
+
+model Preference {
+  id                String               @id @default(cuid())
+  playerId          String               @unique
+  player            Player               @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  categoryThresholds PreferenceCategory[]
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+}
+
+model PreferenceCategory {
+  id            String     @id @default(cuid())
+  preferenceId  String
+  preference    Preference @relation(fields: [preferenceId], references: [id], onDelete: Cascade)
+  category      ArtifactCategory
+  minBonusPct   Float      @default(0)
+  minLevel      Int        @default(3)
+
+  @@unique([preferenceId, category])
+  @@index([preferenceId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  playerId  String
+  player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([playerId])
+  @@index([read])
+}
+
+model Artifact {
+  id               String            @id @default(cuid())
+  category         ArtifactCategory
+  bonusPct         Float
+  level            Int
+  playerId         String
+  player           Player            @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  listingArtifacts ListingArtifact[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@index([playerId])
+  @@index([category])
+}
+
+enum ArtifactCategory {
+  COMBAT
+  TRANSPORT
+  MINING
+  DRONE
+  WEAPON
+  SHIELD
+}
+
+model Listing {
+  id               String            @id @default(cuid())
+  description      String?
+  playerId         String
+  player           Player            @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  status           ListingStatus     @default(ACTIVE)
+  priceType        PriceType         @default(FREE)
+  donationAmount   Float?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  expiresAt        DateTime  @default(now())
+  archivedAt       DateTime?
+  listingArtifacts ListingArtifact[]
+  notifications    Notification[]
+  interests        Interest[]
+
+  @@index([playerId])
+  @@index([status])
+  @@index([priceType])
+  @@index([expiresAt])
+}
+
+enum ListingStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  ARCHIVED
+}
+
+enum PriceType {
+  FREE
+  DONATION
+  TRADE
+}
+
+model ListingArtifact {
+  id          String        @id @default(cuid())
+  listingId   String
+  listing     Listing       @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  artifactId  String
+  artifact    Artifact      @relation(fields: [artifactId], references: [id], onDelete: Cascade)
+  role        ArtifactRole
+
+  @@unique([listingId, artifactId])
+  @@index([listingId])
+  @@index([artifactId])
+}
+
+model Interest {
+  id          String   @id @default(cuid())
+  listingId   String
+  listing     Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  playerId    String
+  player      Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  message     String?
+  status      InterestStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+
+  @@index([listingId])
+  @@index([playerId])
+  @@unique([listingId, playerId])
+}
+
+enum InterestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum ArtifactRole {
+  OFFERING
+  WANTING
+}
