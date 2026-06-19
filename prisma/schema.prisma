@@ -21,6 +21,8 @@ model Player {
   notifications Notification[]
   sessions      Session[]
   interests     Interest[]
+  tradesAsLister Trade[] @relation("TradesAsLister")
+  tradesAsTrader Trade[] @relation("TradesAsTrader")
 }
 
 model Session {
@@ -80,9 +82,20 @@ model Artifact {
   listingArtifacts ListingArtifact[]
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
+  archived         Boolean           @default(false)
+  archivedAt       DateTime?
+  archiveReason    ArtifactArchiveStatus?
+  archiveListingId String?
 
   @@index([playerId])
   @@index([category])
+  @@index([archived])
+}
+
+enum ArtifactArchiveStatus {
+  TRADED
+  EXPIRED
+  DELISTED
 }
 
 enum ArtifactCategory {
@@ -109,18 +122,12 @@ model Listing {
   listingArtifacts ListingArtifact[]
   notifications    Notification[]
   interests        Interest[]
+  trades            Trade[]
 
   @@index([playerId])
   @@index([status])
   @@index([priceType])
   @@index([expiresAt])
-}
-
-enum ListingStatus {
-  ACTIVE
-  COMPLETED
-  CANCELLED
-  ARCHIVED
 }
 
 enum PriceType {
@@ -142,6 +149,13 @@ model ListingArtifact {
   @@index([artifactId])
 }
 
+enum ListingStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  ARCHIVED
+}
+
 model Interest {
   id          String   @id @default(cuid())
   listingId   String
@@ -156,6 +170,55 @@ model Interest {
   @@index([listingId])
   @@index([playerId])
   @@unique([listingId, playerId])
+}
+
+model Trade {
+  id              String        @id @default(cuid())
+  listingId       String
+  listing         Listing       @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  listerId        String
+  lister          Player        @relation("TradesAsLister", fields: [listerId], references: [id], onDelete: Cascade)
+  traderId        String
+  trader          Player        @relation("TradesAsTrader", fields: [traderId], references: [id], onDelete: Cascade)
+  interestId      String?
+  status          TradeStatus   @default(PENDING)
+  completedAt     DateTime?
+  createdAt       DateTime      @default(now())
+  tradeArtifacts  TradeArtifact[]
+
+  @@index([listerId])
+  @@index([traderId])
+  @@index([status])
+}
+
+model TradeArtifact {
+  id          String            @id @default(cuid())
+  tradeId     String
+  trade       Trade             @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  artifactId  String
+  category    ArtifactCategory
+  bonusPct    Float
+  level       Int
+  fromPlayerId String
+  toPlayerId   String
+  role        TradeArtifactRole
+
+  @@index([tradeId])
+  @@index([fromPlayerId])
+  @@index([toPlayerId])
+}
+
+enum TradeArtifactRole {
+  GIVEN
+  RECEIVED
+}
+
+enum TradeStatus {
+  PENDING
+  LISTER_CONFIRMED
+  TRADER_CONFIRMED
+  COMPLETED
+  CANCELLED
 }
 
 model InterestArtifact {
