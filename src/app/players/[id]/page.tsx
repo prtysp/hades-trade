@@ -10,6 +10,8 @@ import ListingCardWithDelete from "@/components/ListingCardWithDelete";
 import CompressedArtifactBadge, { type ArtifactGroup } from "@/components/CompressedArtifactBadge";
 import TradeCard from "@/components/TradeCard";
 import ArchiveSection from "@/components/ArchiveSection";
+import ArtifactSync from "@/components/ArtifactSync";
+import type { ArtifactItem } from "@/components/ArtifactSync";
 
 export const dynamic = "force-dynamic";
 
@@ -24,21 +26,21 @@ function timeUntilExpiry(expiresAt: Date): string {
   return `${mins}m`;
 }
 
-function groupArtifacts(artifacts: { id: string; category: string; bonusPct: number; level: number; createdAt: Date }[]): ArtifactGroup[] {
+function groupArtifacts(artifacts: { id: string; category: string; bonusPct: number; level: number; createdAt?: Date }[]): ArtifactGroup[] {
   const map = new Map<string, ArtifactGroup>();
   for (const art of artifacts) {
     const key = `${art.category}-${art.bonusPct}-${art.level}`;
     const existing = map.get(key);
     if (existing) {
       existing.count++;
-      existing.artifacts.push({ id: art.id, createdAt: art.createdAt });
+      existing.artifacts.push({ id: art.id, createdAt: art.createdAt ?? new Date() });
     } else {
       map.set(key, {
         category: art.category as any,
         bonusPct: art.bonusPct,
         level: art.level,
         count: 1,
-        artifacts: [{ id: art.id, createdAt: art.createdAt }],
+        artifacts: [{ id: art.id, createdAt: art.createdAt ?? new Date() }],
       });
     }
   }
@@ -181,68 +183,144 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
       )}
 
       {/* ── Artifacts section ── */}
-      <div className="mt-6">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold text-[var(--text)]">
+      {isOwnProfile ? (
+        <ArtifactSync
+          playerId={id}
+          initialArtifacts={activeArtifacts.map((a) => ({
+            id: a.id,
+            category: a.category,
+            bonusPct: a.bonusPct,
+            level: a.level,
+            createdAt: a.createdAt,
+          }))}
+        >
+          {(syncedArtifacts, refreshArtifacts) => {
+            const groups = groupArtifacts(syncedArtifacts);
+            return (
+              <div className="mt-6">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-lg font-semibold text-[var(--text)]">
+                    Artifacts ({syncedArtifacts.length})
+                  </h2>
+                </div>
+
+                <div className="mb-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 sm:p-5">
+                  <h3 className="text-sm font-semibold text-[var(--text)] mb-3">Add Artifact to Inventory</h3>
+                  <AddArtifactForm
+                    playerId={id}
+                    artifacts={syncedArtifacts.map((a) => ({
+                      id: a.id,
+                      category: a.category,
+                      bonusPct: a.bonusPct,
+                      level: a.level,
+                    }))}
+                    onArtifactAdded={refreshArtifacts}
+                  />
+                </div>
+
+                {groups.length === 0 ? (
+                  <p className="text-sm text-[var(--text-dim)]">No artifacts yet. Add some above!</p>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+                    {groups.map((group) => (
+                      <CompressedArtifactBadge
+                        key={`${group.category}-${group.bonusPct}-${group.level}`}
+                        group={group}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          }}
+        </ArtifactSync>
+      ) : (
+        <div className="mt-6">
+          <h2 className="text-lg font-semibold text-[var(--text)] mb-3">
             Artifacts ({activeArtifacts.length})
           </h2>
+          {artifactGroups.length === 0 ? (
+            <p className="text-sm text-[var(--text-dim)]">No artifacts yet.</p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+              {artifactGroups.map((group) => (
+                <CompressedArtifactBadge
+                  key={`${group.category}-${group.bonusPct}-${group.level}`}
+                  group={group}
+                />
+              ))}
+            </div>
+          )}
         </div>
-
-        {isOwnProfile && (
-          <div className="mb-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 sm:p-5">
-            <h3 className="text-sm font-semibold text-[var(--text)] mb-3">Add Artifact to Inventory</h3>
-            <AddArtifactForm playerId={id} />
-          </div>
-        )}
-
-        {artifactGroups.length === 0 ? (
-          <p className="text-sm text-[var(--text-dim)]">
-            {isOwnProfile
-              ? "No artifacts yet. Add some above!"
-              : "No artifacts yet."}
-          </p>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
-            {artifactGroups.map((group) => (
-              <CompressedArtifactBadge
-                key={`${group.category}-${group.bonusPct}-${group.level}`}
-                group={group}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      )}
 
       {/* ── Active Listings section ── */}
-      <div className="mt-6">
-        <h2 className="text-lg font-semibold text-[var(--text)] mb-3">
-          Active Listings ({player.listings.length})
-        </h2>
+      {isOwnProfile ? (
+        <ArtifactSync
+          playerId={id}
+          initialArtifacts={activeArtifacts.map((a) => ({
+            id: a.id,
+            category: a.category,
+            bonusPct: a.bonusPct,
+            level: a.level,
+            createdAt: a.createdAt,
+          }))}
+        >
+          {(syncedArtifacts) => (
+            <div className="mt-6">
+              <h2 className="text-lg font-semibold text-[var(--text)] mb-3">
+                Active Listings ({player.listings.length})
+              </h2>
 
-        {isOwnProfile && (
-          <div className="mb-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 sm:p-5">
-            <h3 className="text-sm font-semibold text-[var(--text)] mb-3">Create New Listing</h3>
-            <CreateListingForm
-              playerId={id}
-              key={activeArtifacts.length}
-            />
-          </div>
-        )}
+              <div className="mb-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 sm:p-5">
+                <h3 className="text-sm font-semibold text-[var(--text)] mb-3">Create New Listing</h3>
+                <CreateListingForm
+                  playerId={id}
+                  artifacts={syncedArtifacts.map((a) => ({
+                    id: a.id,
+                    category: a.category,
+                    bonusPct: a.bonusPct,
+                    level: a.level,
+                  }))}
+                />
+              </div>
 
-        {player.listings.length === 0 ? (
-          <p className="text-sm text-[var(--text-dim)]">No active listings.</p>
-        ) : (
-          <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
-            {player.listings.map((listing) => (
-              <ListingCardWithDelete
-                key={listing.id}
-                listing={listing as any}
-                isOwnProfile={isOwnProfile}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+              {player.listings.length === 0 ? (
+                <p className="text-sm text-[var(--text-dim)]">No active listings.</p>
+              ) : (
+                <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
+                  {player.listings.map((listing) => (
+                    <ListingCardWithDelete
+                      key={listing.id}
+                      listing={listing as any}
+                      isOwnProfile={isOwnProfile}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </ArtifactSync>
+      ) : (
+        <div className="mt-6">
+          <h2 className="text-lg font-semibold text-[var(--text)] mb-3">
+            Active Listings ({player.listings.length})
+          </h2>
+          {player.listings.length === 0 ? (
+            <p className="text-sm text-[var(--text-dim)]">No active listings.</p>
+          ) : (
+            <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
+              {player.listings.map((listing) => (
+                <ListingCardWithDelete
+                  key={listing.id}
+                  listing={listing as any}
+                  isOwnProfile={isOwnProfile}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Trade Preferences (own profile only) ── */}
       {isOwnProfile && (

@@ -29,10 +29,11 @@ interface PreferenceThreshold {
 
 interface CreateListingFormProps {
   playerId: string;
+  artifacts: Artifact[];
 }
 
-export default function CreateListingForm({ playerId }: CreateListingFormProps) {
-  const [artifacts, setArtifacts] = useState<Artifact[]>([]);
+export default function CreateListingForm({ playerId, artifacts }: CreateListingFormProps) {
+  // artifacts are managed by the parent via ArtifactSync
   const [preference, setPreference] = useState<PreferenceThreshold[]>([]);
   const [description, setDescription] = useState("");
   const [offering, setOffering] = useState<string[]>([]);
@@ -49,11 +50,6 @@ export default function CreateListingForm({ playerId }: CreateListingFormProps) 
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`/api/artifacts?playerId=${playerId}`)
-      .then((res) => res.json())
-      .then(setArtifacts)
-      .catch(console.error);
-
     fetch(`/api/preferences?playerId=${playerId}`)
       .then((res) => res.json())
       .then((data) => {
@@ -148,7 +144,8 @@ export default function CreateListingForm({ playerId }: CreateListingFormProps) 
         throw new Error(errorMsg);
       }
 
-      window.location.href = "/listings";
+      const newListing = await res.json();
+      window.location.href = `/listings/${newListing.id}`;
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {

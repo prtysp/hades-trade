@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { ArtifactCategory } from "@prisma/client";
 
 const categoryEmojis: Record<ArtifactCategory, string> = {
@@ -23,10 +23,11 @@ interface Artifact {
 
 interface AddArtifactFormProps {
   playerId: string;
-  onArtifactAdded?: () => void;
+  artifacts: Artifact[];
+  onArtifactAdded: () => void;
 }
 
-export default function AddArtifactForm({ playerId, onArtifactAdded }: AddArtifactFormProps) {
+export default function AddArtifactForm({ playerId, artifacts, onArtifactAdded }: AddArtifactFormProps) {
   const [category, setCategory] = useState<ArtifactCategory>("COMBAT");
   const [bonusPct, setBonusPct] = useState("320");
   const [level, setLevel] = useState(10);
@@ -34,23 +35,7 @@ export default function AddArtifactForm({ playerId, onArtifactAdded }: AddArtifa
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [deleting, setDeleting] = useState<string | null>(null);
-
-  // Fetch current inventory
-  const fetchArtifacts = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/artifacts?playerId=${playerId}`);
-      const data = await res.json();
-      setArtifacts(data);
-    } catch (e) {
-      console.error(e);
-    }
-  }, [playerId]);
-
-  useEffect(() => {
-    fetchArtifacts();
-  }, [playerId, fetchArtifacts]);
 
   const handleDelete = async (artifactId: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -63,8 +48,7 @@ export default function AddArtifactForm({ playerId, onArtifactAdded }: AddArtifa
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error ?? "Failed to delete");
       }
-      await fetchArtifacts();
-      onArtifactAdded?.();
+      onArtifactAdded();
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : "Failed to delete artifact");
     } finally {
@@ -116,11 +100,8 @@ export default function AddArtifactForm({ playerId, onArtifactAdded }: AddArtifa
       // Only reset quantity
       setQuantity(1);
 
-      // Refresh inventory list
-      await fetchArtifacts();
-
       // Notify parent to refresh
-      onArtifactAdded?.();
+      onArtifactAdded();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {

@@ -47,7 +47,7 @@ export default function RootLayout({
               <header className="border-b backdrop-blur-sm sticky top-0 z-50">
                 <nav className="mx-auto flex max-w-6xl items-center justify-between px-3 sm:px-4 py-2 sm:py-3">
                   <Link href="/" className="text-lg sm:text-xl font-bold text-amber-400 shrink-0">
-                    ⭐ Hades Star
+                    ⭐ Hades Star Trade
                   </Link>
                   <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm font-medium overflow-x-auto">
                     <Link href="/" className="opacity-70 hover:opacity-100 transition whitespace-nowrap px-1">
