@@ -28,9 +28,10 @@ interface PlayerArtifact {
 interface InterestButtonProps {
   listingId: string;
   listingArtifacts: ListingArtifact[];
+  priceType: string;
 }
 
-export default function InterestButton({ listingId, listingArtifacts }: InterestButtonProps) {
+export default function InterestButton({ listingId, listingArtifacts, priceType }: InterestButtonProps) {
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [message, setMessage] = useState("");
@@ -77,20 +78,33 @@ export default function InterestButton({ listingId, listingArtifacts }: Interest
     setError(null);
 
     try {
+      const payload = {
+        listingId,
+        message: message.trim() || undefined,
+        offeringArtifactIds: wantedIds,
+        wantingArtifactIds: myOfferingIds,
+      };
+      console.log("Express interest payload:", JSON.stringify(payload));
+
       const res = await fetch("/api/interests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          listingId,
-          message: message.trim() || undefined,
-          offeringArtifactIds: wantedIds,
-          wantingArtifactIds: myOfferingIds,
-        }),
+        body: JSON.stringify(payload),
       });
+
+      console.log("Express interest response status:", res.status);
 
       if (!res.ok) {
         let msg = "Failed to express interest";
-        try { const d = await res.json(); msg = d.error ?? msg; } catch { /* */ }
+        try {
+          const d = await res.json();
+          msg = d.error ?? msg;
+          console.error("Express interest API error:", res.status, d);
+        } catch {
+          const text = await res.text();
+          console.error("Express interest response text:", res.status, text);
+          msg = text || msg;
+        }
         throw new Error(msg);
       }
 
@@ -98,6 +112,7 @@ export default function InterestButton({ listingId, listingArtifacts }: Interest
       setShowForm(false);
       router.refresh();
     } catch (err: unknown) {
+      console.error("Express interest catch:", err);
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setSubmitting(false);
@@ -115,7 +130,7 @@ export default function InterestButton({ listingId, listingArtifacts }: Interest
   if (!showForm) {
     return (
       <button
-        onClick={() => setShowForm(true)}
+        onClick={() => { setShowForm(true); if (priceType !== "TRADE") setMyOfferingIds([]); }}
         className="w-full rounded-xl border border-[var(--accent)] bg-[var(--accent)]/10 px-4 py-3 text-sm font-semibold text-[var(--accent-text)] hover:bg-[var(--accent)]/20 transition"
       >
         🤝 Express Interest
@@ -166,46 +181,48 @@ export default function InterestButton({ listingId, listingArtifacts }: Interest
           )}
         </div>
 
-        {/* Step 2: What do you offer in return? */}
-        <div>
-          <label className="block text-xs font-semibold text-[var(--amber)] mb-2">
-            What do you offer in return? <span className="text-[var(--text-dim)] font-normal">(optional)</span>
-          </label>
-          {loadingArtifacts ? (
-            <p className="text-xs text-[var(--text-dim)]">Loading your artifacts…</p>
-          ) : playerArtifacts.length === 0 ? (
-            <p className="text-xs text-[var(--text-dim)]">You have no artifacts to offer.</p>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {playerArtifacts.map((art) => {
-                const selected = myOfferingIds.includes(art.id);
-                return (
-                  <button
-                    key={art.id}
-                    type="button"
-                    onClick={() => toggleMyOffering(art.id)}
-                    className={`rounded-lg border p-2.5 text-left transition ${
-                      selected
-                        ? "border-[var(--amber)] bg-[var(--amber-bg)] ring-1 ring-[var(--amber)]"
-                        : "border-[var(--border)] bg-[var(--bg-input)] hover:border-[var(--border-hover)]"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm">{categoryEmojis[art.category]}</span>
-                        <span className="text-xs font-medium text-[var(--text)]">{art.category}</span>
+        {/* Step 2: What do you offer in return? (only for TRADE listings) */}
+        {priceType === "TRADE" && (
+          <div>
+            <label className="block text-xs font-semibold text-[var(--amber)] mb-2">
+              What do you offer in return? <span className="text-[var(--text-dim)] font-normal">(optional)</span>
+            </label>
+            {loadingArtifacts ? (
+              <p className="text-xs text-[var(--text-dim)]">Loading your artifacts…</p>
+            ) : playerArtifacts.length === 0 ? (
+              <p className="text-xs text-[var(--text-dim)]">You have no artifacts to offer.</p>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {playerArtifacts.map((art) => {
+                  const selected = myOfferingIds.includes(art.id);
+                  return (
+                    <button
+                      key={art.id}
+                      type="button"
+                      onClick={() => toggleMyOffering(art.id)}
+                      className={`rounded-lg border p-2.5 text-left transition ${
+                        selected
+                          ? "border-[var(--amber)] bg-[var(--amber-bg)] ring-1 ring-[var(--amber)]"
+                          : "border-[var(--border)] bg-[var(--bg-input)] hover:border-[var(--border-hover)]"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm">{categoryEmojis[art.category]}</span>
+                          <span className="text-xs font-medium text-[var(--text)]">{art.category}</span>
+                        </div>
+                        {selected && <span className="text-[var(--amber)] text-xs">✓</span>}
                       </div>
-                      {selected && <span className="text-[var(--amber)] text-xs">✓</span>}
-                    </div>
-                    <div className="mt-0.5 text-xs text-[var(--text-muted)]">
-                      +{art.bonusPct}% · Lv.{art.level}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
+                      <div className="mt-0.5 text-xs text-[var(--text-muted)]">
+                        +{art.bonusPct}% · Lv.{art.level}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Message */}
         <div>

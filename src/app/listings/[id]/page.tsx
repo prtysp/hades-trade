@@ -125,7 +125,7 @@ export default async function ListingPage({
         {isOwnListing ? (
           <InterestsList listingId={listing.id} listingArtifacts={listing.listingArtifacts} />
         ) : currentPlayer && listing.status === "ACTIVE" ? (
-          <InterestButton listingId={listing.id} listingArtifacts={listing.listingArtifacts} />
+          <InterestButton listingId={listing.id} listingArtifacts={listing.listingArtifacts} priceType={listing.priceType} />
         ) : !currentPlayer ? (
           <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-center">
             <p className="text-sm text-[var(--text-muted)]">

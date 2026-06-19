@@ -96,24 +96,55 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const interest = await prisma.interest.create({
-    data: {
+  let interest;
+  try {
+    const createData: Record<string, unknown> = {
       listingId,
       playerId: player.id,
       message: message?.trim() || null,
-      ...(interestArtifacts.length > 0
-        ? {
-            interestArtifacts: {
-              create: interestArtifacts,
-            },
-          }
-        : {}),
-    },
-    include: {
-      player: { select: { id: true, username: true, corporation: true } },
-      interestArtifacts: true,
-    },
-  });
+    };
+    if (interestArtifacts.length > 0) {
+      createData.interestArtifacts = { create: interestArtifacts };
+    }
+    interest = await prisma.interest.create({
+      data: createData as Parameters<typeof prisma.interest.create>[0]["data"],
+      include: {
+        player: { select: { id: true, username: true, corporation: true } },
+        interestArtifacts: true,
+      },
+    });
+  } catch (createErr: unknown) {
+    console.error("Interest create error:", createErr);
+    const errMsg = createErr instanceof Error ? createErr.message : "Unknown error";
+    // If the interestArtifacts table doesn't exist yet, retry without artifacts
+    if (errMsg.includes("InterestArtifact") || errMsg.includes("relation") || errMsg.includes("table")) {
+      console.log("Retrying without interestArtifacts...");
+      try {
+        interest = await prisma.interest.create({
+          data: {
+            listingId,
+            playerId: player.id,
+            message: message?.trim() || null,
+          },
+          include: {
+            player: { select: { id: true, username: true, corporation: true } },
+            interestArtifacts: true,
+          },
+        });
+      } catch (retryErr: unknown) {
+        console.error("Interest retry error:", retryErr);
+        return NextResponse.json(
+          { error: retryErr instanceof Error ? retryErr.message : "Failed to create interest" },
+          { status: 500 }
+        );
+      }
+    } else {
+      return NextResponse.json(
+        { error: errMsg },
+        { status: 500 }
+      );
+    }
+  }
 
   // Notify the listing owner that someone expressed interest
   const listingData = await prisma.listing.findUnique({
