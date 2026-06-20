@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
-import { ArtifactRole, ListingStatus } from "@prisma/client";
+import { ArtifactRole, ListingStatus, NotificationType } from "@prisma/client";
 import { archiveExpiredListings } from "@/lib/archive";
 
 // Check if an artifact matches a player's per-category preference thresholds
@@ -96,7 +96,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { description, playerId, offering, wanting, priceType, donationAmount, expiresInDays } = body;
+  const { description, playerId, offering, wanting, wantingPrefs, priceType, donationAmount, expiresInDays } = body;
 
   if (!playerId) {
     return NextResponse.json({ error: "playerId is required" }, { status: 400 });
@@ -104,8 +104,15 @@ export async function POST(req: NextRequest) {
   if (!offering || offering.length === 0) {
     return NextResponse.json({ error: "At least one offering artifact is required" }, { status: 400 });
   }
-  if (priceType === "TRADE" && (!wanting || wanting.length === 0)) {
-    return NextResponse.json({ error: "Trade listings must specify at least one wanted artifact" }, { status: 400 });
+  const wantsArtifacts = (wanting || []).length > 0;
+  const wantingPrefsList = (wantingPrefs || []) as any[];
+  const wantsPrefs = wantingPrefsList.length > 0;
+  if (priceType === "TRADE" && !wantsArtifacts && !wantsPrefs) {
+    return NextResponse.json({ error: "Trade listings must specify at least one wanted artifact or preference" }, { status: 400 });
+  }
+  let finalDescription = description || "";
+  if (wantsPrefs) {
+    finalDescription = (finalDescription ? finalDescription + "\n\n" : "") + "__WANTED_PREFS__" + JSON.stringify(wantingPrefsList);
   }
 
   const days = expiresInDays ?? 1;
@@ -121,7 +128,7 @@ export async function POST(req: NextRequest) {
 
   const listing = await prisma.listing.create({
     data: {
-      description,
+      description: finalDescription,
       playerId,
       status: "ACTIVE",
       priceType: priceType ?? "FREE",
@@ -159,7 +166,8 @@ export async function POST(req: NextRequest) {
       include: { categoryThresholds: true },
     });
 
-    const notifications: { playerId: string; listingId: string; message: string }[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const notifications: any[] = [];
 
     for (const pref of preferences) {
       if (pref.categoryThresholds.length === 0) continue;
@@ -175,6 +183,7 @@ export async function POST(req: NextRequest) {
         notifications.push({
           playerId: pref.playerId,
           listingId: listing.id,
+          type: NotificationType.GENERAL,
           message: `New listing (${listingLabel}) has matching artifacts: ${artDescriptions.join(", ")}`,
         });
       }

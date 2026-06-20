@@ -151,7 +151,7 @@ export default function TradeCard({ trade, currentPlayerId }: TradeCardProps) {
                 disabled={loading}
                 className="rounded-lg bg-[var(--green-bg)] px-3 py-1.5 text-xs font-semibold text-[var(--green)] hover:opacity-80 transition disabled:opacity-50"
               >
-                {trade.status === "PENDING" ? "✓ I've Exchanged In-Game" : "✓ Complete Trade"}
+✓ I've Exchanged In-Game
               </button>
               {canCancel && (
                 <button
