@@ -125,11 +125,20 @@ export default function NotificationsPage() {
   const acknowledgeTrade = async (notificationId: string, tradeId: string) => {
     setActingId(notificationId);
     try {
-      const res = await fetch("/api/notifications/acknowledge", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notificationId, tradeId }),
+      // First confirm the trade via the trades API (same as TradeCard button)
+      const tradeRes = await fetch(`/api/trades/${tradeId}`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "confirm" }),
       });
-      if (res.ok) { await markRead(notificationId); notifyRefresh(); setTimeout(loadNotifications, 300); }
+      if (tradeRes.ok) {
+        // Mark the notification as read
+        await fetch("/api/notifications", {
+          method: "PATCH", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ notificationId }),
+        });
+        notifyRefresh();
+        setTimeout(loadNotifications, 300);
+      }
     } catch (e) { console.error(e); }
     finally { setActingId(null); }
   };

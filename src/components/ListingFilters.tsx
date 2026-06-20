@@ -1,153 +1,51 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { categoryEmojis } from "@/lib/artifact-styles";
-import { useTheme } from "@/components/ThemeProvider";
 import * as Slider from "@radix-ui/react-slider";
-import { ChevronDown, X, Check } from "lucide-react";
+import { X } from "lucide-react";
 
 const ALL_CATEGORIES = ["COMBAT", "TRANSPORT", "MINING", "DRONE", "WEAPON", "SHIELD"] as const;
-
-/** Strip alpha channel from a hex color like #rrggbbaa -> #rrggbb */
-function stripAlpha(hex: string): string {
-  if (hex.length === 9) return hex.slice(0, 7);
-  return hex;
-}
 const ALL_TYPES = [
   { value: "FREE", label: "🆓 Free" },
   { value: "DONATION", label: "💰 Donation" },
   { value: "TRADE", label: "🔄 Trade" },
 ] as const;
 
-function forceBg(el: HTMLElement | null) {
-  if (el) {
-    el.style.setProperty("background-color", "var(--bg-input)", "important");
-    // Also force on parent (the Radix portal wrapper)
-    if (el.parentElement) {
-      el.parentElement.style.setProperty("background-color", "var(--bg-input)", "important");
-    }
-  }
-}
+const categoryColors: Record<string, string> = {
+  COMBAT: "#22c55e",
+  TRANSPORT: "#eab308",
+  MINING: "#a855f7",
+  DRONE: "#ea781e",
+  WEAPON: "#ef4444",
+  SHIELD: "#3b82f6",
+};
 
-function MultiSelectDropdown({
+function ToggleChip({
   label,
-  options,
   selected,
-  onChange,
-  emojiMap,
+  onClick,
+  color,
 }: {
   label: string;
-  options: readonly { value: string; label: string }[] | readonly string[];
-  selected: string[];
-  onChange: (values: string[]) => void;
-  emojiMap?: Record<string, string>;
+  selected: boolean;
+  onClick: () => void;
+  color?: string;
 }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const btnRef = useRef<HTMLButtonElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const toggle = (value: string) => {
-    if (selected.includes(value)) {
-      onChange(selected.filter((v) => v !== value));
-    } else {
-      onChange([...selected, value]);
-    }
-  };
-
-  useEffect(() => {
-    if (open && dropdownRef.current) {
-      forceBg(dropdownRef.current);
-    }
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
-
-  const displayText =
-    selected.length === 0
-      ? "All"
-      : selected.length === 1
-        ? selected[0]
-        : `${selected.length} selected`;
-
-  const { theme } = useTheme();
-  const bgColor = stripAlpha(theme.bgInput);
-
   return (
-    <div ref={ref} className="relative">
-      <button
-        ref={btnRef}
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between rounded-lg border border-[var(--border)] px-2.5 py-1.5 text-sm text-[var(--text)] hover:border-[var(--border-hover)] transition"
-        style={{ backgroundColor: bgColor }}
-      >
-        <span className="truncate">
-          <span className="text-[var(--text-muted)] mr-1">{label}:</span>
-          {displayText}
-        </span>
-        <ChevronDown className={`w-3.5 h-3.5 text-[var(--text-muted)] shrink-0 ml-1 transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-      {open && (
-        <div
-          ref={dropdownRef}
-          className="absolute top-full left-0 right-0 mt-1 rounded-lg border border-[var(--border)] shadow-xl z-[9999] max-h-60 overflow-y-auto"
-          style={{ backgroundColor: bgColor }}
-        >
-          <div className="p-1.5 space-y-0.5">
-            {options.map((opt) => {
-              const value = typeof opt === "string" ? opt : opt.value;
-              const displayLabel = typeof opt === "string" ? opt : opt.label;
-              const isSelected = selected.includes(value);
-              return (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => toggle(value)}
-                  className={`w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-xs transition ${
-                    isSelected
-                      ? "bg-[var(--accent-bg)] text-[var(--accent-text)]"
-                      : "text-[var(--text-muted)] hover:bg-[var(--bg-card)] hover:text-[var(--text)]"
-                  }`}
-                >
-                  <div
-                    className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${
-                      isSelected ? "bg-[var(--accent)] border-[var(--accent)]" : "border-[var(--border)]"
-                    }`}
-                    style={!isSelected ? { backgroundColor: "var(--bg-card)" } : undefined}
-                  >
-                    {isSelected && <Check className="w-2.5 h-2.5 text-white" />}
-                  </div>
-                  {emojiMap?.[value] && <span>{emojiMap[value]}</span>}
-                  <span className="truncate">{displayLabel}</span>
-                </button>
-              );
-            })}
-          </div>
-          {selected.length > 0 && (
-            <div className="p-1.5 border-t border-[var(--border)]">
-              <button
-                type="button"
-                onClick={() => onChange([])}
-                className="w-full text-center text-[10px] text-[var(--text-dim)] hover:text-[var(--text)] transition py-0.5"
-              >
-                Clear selection
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      className="rounded-lg border px-2.5 py-1 text-xs font-medium transition"
+      style={{
+        borderColor: selected ? (color || "var(--accent)") : "var(--border)",
+        backgroundColor: selected ? (color || "var(--accent)") + "22" : "var(--bg-input)",
+        color: selected ? (color || "var(--accent-text)") : "var(--text-muted)",
+      }}
+    >
+      {label}
+    </button>
   );
 }
 
@@ -234,6 +132,18 @@ export default function ListingFilters() {
     return () => clearTimeout(timeout);
   }, [selectedTypes, selectedCategories, minBonus, minLevel, params, router]);
 
+  const toggleType = (value: string) => {
+    setSelectedTypes((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
+    );
+  };
+
+  const toggleCategory = (value: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
+    );
+  };
+
   const clearAll = () => {
     setSelectedTypes([]);
     setSelectedCategories([]);
@@ -254,22 +164,33 @@ export default function ListingFilters() {
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
-        <MultiSelectDropdown
-          label="Type"
-          options={ALL_TYPES as unknown as { value: string; label: string }[]}
-          selected={selectedTypes}
-          onChange={setSelectedTypes}
-        />
-        <MultiSelectDropdown
-          label="Category"
-          options={ALL_CATEGORIES as unknown as string[]}
-          selected={selectedCategories}
-          onChange={setSelectedCategories}
-          emojiMap={categoryEmojis}
-        />
+      {/* Type toggles */}
+      <div>
+        <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5">Type</label>
+        <div className="flex flex-wrap gap-1.5">
+          {ALL_TYPES.map(({ value, label }) => (
+            <ToggleChip key={value} label={label} selected={selectedTypes.includes(value)} onClick={() => toggleType(value)} />
+          ))}
+        </div>
       </div>
 
+      {/* Category toggles */}
+      <div>
+        <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5">Category</label>
+        <div className="flex flex-wrap gap-1.5">
+          {ALL_CATEGORIES.map((cat) => (
+            <ToggleChip
+              key={cat}
+              label={`${categoryEmojis[cat]} ${cat.charAt(0)}${cat.slice(1).toLowerCase()}`}
+              selected={selectedCategories.includes(cat)}
+              onClick={() => toggleCategory(cat)}
+              color={categoryColors[cat]}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Sliders */}
       <div className="grid grid-cols-2 gap-3">
         <SliderFilter
           label="Min Bonus"
