@@ -213,7 +213,6 @@ export default function AddArtifactForm() {
   const handleDelete = async (artifactId: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!confirm("Delete this artifact?")) return;
     setDeleting(artifactId);
     try {
       const res = await fetch(`/api/artifacts/${artifactId}`, { method: "DELETE" });
