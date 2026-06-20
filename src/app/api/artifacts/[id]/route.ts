@@ -13,7 +13,6 @@ export async function DELETE(
 
   const { id } = await params;
 
-  // Verify the artifact belongs to the player
   const artifact = await prisma.artifact.findUnique({ where: { id } });
   if (!artifact) {
     return NextResponse.json({ error: "Artifact not found" }, { status: 404 });
@@ -25,20 +24,17 @@ export async function DELETE(
   // Find all listing artifacts that reference this artifact
   const listingArtifacts = await prisma.listingArtifact.findMany({
     where: { artifactId: id },
-    include: { listing: { select: { id: true, status: true, playerId: true } } },
+    include: { listing: { select: { id: true, status: true } } },
   });
 
   // Remove this artifact from all listings it's part of
   for (const la of listingArtifacts) {
-    // Delete the listing artifact entry
     await prisma.listingArtifact.delete({ where: { id: la.id } });
 
-    // Check if the listing now has no offering artifacts left
     const remainingOfferings = await prisma.listingArtifact.count({
       where: { listingId: la.listing.id, role: "OFFERING" },
     });
 
-    // If no offerings left, archive the listing
     if (remainingOfferings === 0) {
       await prisma.listing.update({
         where: { id: la.listing.id },
@@ -47,8 +43,15 @@ export async function DELETE(
     }
   }
 
-  // Delete the artifact itself
-  await prisma.artifact.delete({ where: { id } });
+  // Soft-delete: archive the artifact with DELETED reason
+  await prisma.artifact.update({
+    where: { id },
+    data: {
+      archived: true,
+      archivedAt: new Date(),
+      archiveReason: "DELETED",
+    },
+  });
 
   return NextResponse.json({ success: true });
 }

@@ -7,10 +7,17 @@ const categoryEmojis: Record<string, string> = {
   COMBAT: "⚔️", TRANSPORT: "🚀", MINING: "⛏️", DRONE: "🤖", WEAPON: "🔫", SHIELD: "🛡️",
 };
 
-const archiveReasonLabels: Record<string, { label: string; color: string }> = {
-  TRADED:   { label: "Traded",   color: "text-[var(--green)]" },
-  EXPIRED:  { label: "Expired",  color: "text-[var(--amber)]" },
-  DELISTED: { label: "Delisted", color: "text-[var(--red)]" },
+const archiveReasonLabels: Record<string, { label: string; color: string; bg: string }> = {
+  TRADED:   { label: "Traded",   color: "text-[var(--green)]",  bg: "bg-[var(--green-bg)]" },
+  EXPIRED:  { label: "Expired",  color: "text-[var(--amber)]",  bg: "bg-[var(--amber-bg)]" },
+  DELISTED: { label: "Deleted",  color: "text-[var(--red)]",    bg: "bg-[var(--red-bg)]" },
+  DELETED:  { label: "Deleted",  color: "text-[var(--red)]",    bg: "bg-[var(--red-bg)]" },
+};
+
+const listingStatusLabels: Record<string, { label: string; color: string; bg: string; description: string }> = {
+  COMPLETED: { label: "Completed", color: "text-[var(--green)]", bg: "bg-[var(--green-bg)]", description: "All artifacts traded" },
+  ARCHIVED:  { label: "Expired",   color: "text-[var(--amber)]", bg: "bg-[var(--amber-bg)]", description: "Listing expired" },
+  CANCELLED: { label: "Deleted",    color: "text-[var(--red)]",   bg: "bg-[var(--red-bg)]",   description: "Manually deleted" },
 };
 
 interface ArchivedArtifact {
@@ -237,52 +244,43 @@ export default function ArchiveSection({
                   </p>
                 ) : (
                   <div className="space-y-2">
-                    {archivedListings.map((listing) => (
-                      <Link
-                        key={listing.id}
-                        href={`/listings/${listing.id}`}
-                        className="block rounded-lg border border-[var(--border)] bg-[var(--bg-input)] p-3 transition hover:border-[var(--border-hover)]"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                                listing.status === "COMPLETED"
-                                  ? "bg-[var(--green-bg)] text-[var(--green)]"
-                                  : listing.status === "ARCHIVED"
-                                  ? "bg-[var(--amber-bg)] text-[var(--amber)]"
-                                  : "bg-[var(--red-bg)] text-[var(--red)]"
-                              }`}
-                            >
-                              {listing.status}
-                            </span>
-                            <span className="text-xs text-[var(--text-muted)]">
-                              {listing.priceType}
+                    {archivedListings.map((listing) => {
+                      const statusInfo = listingStatusLabels[listing.status] || listingStatusLabels["ARCHIVED"];
+                      return (
+                        <Link
+                          key={listing.id}
+                          href={`/listings/${listing.id}`}
+                          className="block rounded-lg border border-[var(--border)] bg-[var(--bg-input)] p-3 transition hover:border-[var(--border-hover)]"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusInfo.color} ${statusInfo.bg}`}>
+                                {statusInfo.label}
+                              </span>
+                              <span className="text-xs text-[var(--text-muted)]">{listing.priceType}</span>
+                            </div>
+                            <span className="text-xs text-[var(--text-dim)]">
+                              {listing.archivedAt
+                                ? new Date(listing.archivedAt).toLocaleDateString()
+                                : new Date(listing.updatedAt).toLocaleDateString()}
                             </span>
                           </div>
-                          <span className="text-xs text-[var(--text-dim)]">
-                            {listing.archivedAt
-                              ? new Date(listing.archivedAt).toLocaleDateString()
-                              : new Date(listing.updatedAt).toLocaleDateString()}
-                          </span>
-                        </div>
-                        {listing.description && (
-                          <p className="mt-1 text-xs text-[var(--text)] truncate">
-                            {listing.description}
-                          </p>
-                        )}
-                        <div className="mt-1.5 flex flex-wrap gap-1">
-                          {listing.listingArtifacts.map((la) => (
-                            <span
-                              key={la.artifact.id}
-                              className="inline-flex items-center gap-0.5 rounded-full border border-[var(--border)] px-1.5 py-0.5 text-[10px] text-[var(--text-muted)]"
-                            >
-                              {categoryEmojis[la.artifact.category]} {la.artifact.category} +{la.artifact.bonusPct}% Lv.{la.artifact.level}
-                            </span>
-                          ))}
-                        </div>
-                      </Link>
-                    ))}
+                          <p className="mt-1 text-[10px] text-[var(--text-dim)]">{statusInfo.description}</p>
+                          {listing.description && (
+                            <p className="mt-1 text-xs text-[var(--text)] truncate">{listing.description}</p>
+                          )}
+                          <div className="mt-1.5 flex flex-wrap gap-1">
+                            {listing.listingArtifacts.map((la) => (
+                              <span key={la.artifact.id}
+                                className="inline-flex items-center gap-0.5 rounded-full border border-[var(--border)] px-1.5 py-0.5 text-[10px] text-[var(--text-muted)]"
+                              >
+                                {categoryEmojis[la.artifact.category]} {la.artifact.category} +{la.artifact.bonusPct}% Lv.{la.artifact.level}
+                              </span>
+                            ))}
+                          </div>
+                        </Link>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -304,28 +302,32 @@ export default function ArchiveSection({
                       return (
                         <div
                           key={art.id}
-                          className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--bg-input)] px-3 py-2"
+                          className="rounded-lg border border-[var(--border)] bg-[var(--bg-input)] px-3 py-2.5"
                         >
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm">
-                              {categoryEmojis[art.category]}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm">{categoryEmojis[art.category]}</span>
+                              <span className="text-xs font-medium text-[var(--text)]">
+                                {art.category} +{art.bonusPct}% Lv.{art.level}
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-[var(--text-dim)]">
+                              {art.archivedAt ? new Date(art.archivedAt).toLocaleDateString() : "—"}
                             </span>
-                            <span className="text-xs font-medium text-[var(--text)]">
-                              {art.category} +{art.bonusPct}% Lv.{art.level}
-                            </span>
-                            {reason && (
-                              <span
-                                className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${reason.color}`}
-                              >
+                          </div>
+                          {reason && (
+                            <div className="mt-1.5 flex items-center gap-1.5">
+                              <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${reason.color} ${reason.bg}`}>
                                 {reason.label}
                               </span>
-                            )}
-                          </div>
-                          <span className="text-[10px] text-[var(--text-dim)]">
-                            {art.archivedAt
-                              ? new Date(art.archivedAt).toLocaleDateString()
-                              : "—"}
-                          </span>
+                              <span className="text-[10px] text-[var(--text-dim)]">
+                                {art.archiveReason === "DELETED" && "Manually deleted"}
+                                {art.archiveReason === "DELISTED" && "Removed from listing"}
+                                {art.archiveReason === "TRADED" && "Traded away"}
+                                {art.archiveReason === "EXPIRED" && "Listing expired"}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       );
                     })}

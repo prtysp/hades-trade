@@ -110,6 +110,7 @@ enum ArtifactArchiveStatus {
   TRADED
   EXPIRED
   DELISTED
+  DELETED
 }
 
 enum ArtifactCategory {

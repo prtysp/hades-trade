@@ -10,7 +10,7 @@ const categoryEmojis: Record<ArtifactCategory, string> = {
 
 const categories: ArtifactCategory[] = ["COMBAT", "TRANSPORT", "MINING", "DRONE", "WEAPON", "SHIELD"];
 const LEVELS = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-const LEVEL_ROWS = [[3, 4, 5, 6], [7, 8, 9, 10], [11, 12]];
+const LEVEL_ROWS = [[3, 4, 5, 6, 7], [8, 9, 10, 11, 12]];
 
 function BonusInput({
   value,
@@ -45,36 +45,33 @@ function BonusInput({
     setEditing(false);
   };
 
-  const steps = [
-    { label: "−10", delta: -10 },
-    { label: "−1", delta: -1 },
-    { label: "+1", delta: 1 },
-    { label: "+10", delta: 10 },
-  ];
+  const canStep = (delta: number) => value + delta >= min && value + delta <= max;
 
   return (
     <div>
       <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">{label}</label>
-      <div className="flex items-center gap-1">
-        {steps.map(({ label: sLabel, delta }) => (
-          <button
-            key={sLabel}
-            type="button"
-            onClick={() => onChange(clamp(value + delta))}
-            disabled={value + delta < min || value + delta > max}
-            className="h-9 w-11 rounded-lg border border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed"
-          >
-            {sLabel}
-          </button>
-        ))}
+      <div className="flex items-center gap-0">
+        {/* −10 */}
+        <button
+          type="button"
+          onClick={() => onChange(clamp(value - 10))}
+          disabled={!canStep(-10)}
+          className="h-9 w-10 rounded-l-lg border border-r-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed"
+        >
+          −10
+        </button>
+        {/* −1 */}
+        <button
+          type="button"
+          onClick={() => onChange(clamp(value - 1))}
+          disabled={!canStep(-1)}
+          className="h-9 w-9 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] transition disabled:opacity-25 disabled:cursor-not-allowed"
+        >
+          −1
+        </button>
+        {/* Text input / display */}
         {editing ? (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              applyDraft();
-            }}
-            className="flex-1 min-w-0"
-          >
+          <form onSubmit={(e) => { e.preventDefault(); applyDraft(); }} className="flex-1 min-w-0">
             <input
               ref={inputRef}
               type="number"
@@ -84,18 +81,36 @@ function BonusInput({
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               onBlur={applyDraft}
-              className="h-9 w-full rounded-lg border border-[var(--accent-text)] bg-[var(--bg-input)] px-2 text-sm font-medium text-[var(--text)] text-center focus:outline-none tabular-nums"
+              className="h-9 w-full border border-[var(--accent-text)] bg-[var(--bg-input)] px-2 text-sm font-medium text-[var(--text)] text-center focus:outline-none tabular-nums"
             />
           </form>
         ) : (
           <button
             type="button"
             onClick={() => setEditing(true)}
-            className="h-9 flex-1 min-w-0 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-2 text-sm font-medium text-[var(--text)] text-center tabular-nums hover:border-[var(--border-hover)] transition"
+            className="h-9 flex-1 min-w-0 border-y border-[var(--border)] bg-[var(--bg-card)] px-2 text-sm font-medium text-[var(--text)] text-center tabular-nums hover:border-[var(--border-hover)] transition"
           >
             {value}<span className="text-[var(--text-muted)] ml-0.5">%</span>
           </button>
         )}
+        {/* +1 */}
+        <button
+          type="button"
+          onClick={() => onChange(clamp(value + 1))}
+          disabled={!canStep(1)}
+          className="h-9 w-9 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] transition disabled:opacity-25 disabled:cursor-not-allowed"
+        >
+          +1
+        </button>
+        {/* +10 */}
+        <button
+          type="button"
+          onClick={() => onChange(clamp(value + 10))}
+          disabled={!canStep(10)}
+          className="h-9 w-10 rounded-r-lg border border-l-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed"
+        >
+          +10
+        </button>
       </div>
     </div>
   );
@@ -170,7 +185,7 @@ function LevelSelector({
                   key={lv}
                   type="button"
                   onClick={() => onChange(lv)}
-                  className={`h-8 flex-1 rounded-lg border text-xs font-medium transition ${
+                  className={`h-9 flex-1 rounded-lg border text-sm font-medium transition ${
                     selected
                       ? "border-[var(--accent-text)] bg-[var(--accent-bg)] text-[var(--accent-text)]"
                       : "border-[var(--border)] bg-[var(--bg-input)] text-[var(--text-muted)] hover:border-[var(--border-hover)] hover:text-[var(--text)]"
@@ -268,7 +283,6 @@ export default function AddArtifactForm() {
   return (
     <div className="space-y-4">
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Category selector */}
         <div>
           <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5">Category</label>
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
@@ -293,20 +307,12 @@ export default function AddArtifactForm() {
           </div>
         </div>
 
-        {/* Bonus %, Level, Quantity in a row */}
         <div className="grid grid-cols-3 gap-3">
-          <BonusInput
-            value={bonusPct}
-            onChange={setBonusPct}
-            min={0}
-            max={500}
-            label="Bonus %"
-          />
+          <BonusInput value={bonusPct} onChange={setBonusPct} min={0} max={500} label="Bonus %" />
           <LevelSelector value={level} onChange={setLevel} label="Level" />
           <StepperInput value={quantity} onChange={setQuantity} min={1} max={50} label="Quantity" />
         </div>
 
-        {/* Preview */}
         <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
           <span>Preview:</span>
           <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--bg-input)] px-2.5 py-1 text-xs font-medium text-[var(--text)]">
@@ -330,7 +336,6 @@ export default function AddArtifactForm() {
         </button>
       </form>
 
-      {/* Current inventory mini-display */}
       {artifacts.length > 0 && (
         <div>
           <h3 className="text-sm font-medium text-[var(--text)] mb-2">
