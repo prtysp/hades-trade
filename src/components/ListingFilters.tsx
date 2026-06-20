@@ -47,8 +47,7 @@ function MultiSelectDropdown({
       <Popover.Trigger asChild>
         <button
           type="button"
-          className="w-full flex items-center justify-between rounded-lg border border-[var(--border)] px-2.5 py-1.5 text-sm text-[var(--text)] hover:border-[var(--border-hover)] transition"
-          style={{ backgroundColor: "var(--bg-input)" }}
+          className="w-full flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--bg-input)] !bg-[var(--bg-input)] px-2.5 py-1.5 text-sm text-[var(--text)] hover:border-[var(--border-hover)] transition"
         >
           <span className="truncate">
             <span className="text-[var(--text-muted)] mr-1">{label}:</span>
@@ -59,11 +58,10 @@ function MultiSelectDropdown({
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Content
-          className="z-[9999] w-56 rounded-lg border border-[var(--border)] shadow-xl p-1.5"
-          style={{ backgroundColor: "var(--bg-card)" }}
           sideOffset={4}
           align="start"
         >
+          <div className="z-[9999] w-56 rounded-lg border border-[var(--border)] shadow-xl p-1.5" style={{ backgroundColor: 'var(--bg-input)' }}>
           <div className="space-y-0.5 max-h-60 overflow-y-auto">
             {options.map((opt) => {
               const value = typeof opt === "string" ? opt : opt.value;
@@ -107,6 +105,7 @@ function MultiSelectDropdown({
               </button>
             </div>
           )}
+          </div>
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>
