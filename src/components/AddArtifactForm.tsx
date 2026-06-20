@@ -244,7 +244,7 @@ export default function AddArtifactForm() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <BonusInput value={bonusPct} onChange={setBonusPct} min={0} max={500} label="Bonus %" />
+          <BonusInput value={bonusPct} onChange={setBonusPct} min={0} max={360} label="Bonus %" />
           <LevelSelector value={level} onChange={setLevel} label="Level" />
           <StepperInput value={quantity} onChange={setQuantity} min={1} max={50} label="Quantity" />
         </div>

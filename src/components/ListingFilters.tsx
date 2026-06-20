@@ -197,7 +197,7 @@ export default function ListingFilters() {
           value={minBonus}
           onChange={setMinBonus}
           min={0}
-          max={500}
+          max={360}
           step={10}
           formatValue={(v) => `${v}%`}
           formatDisplay={(v) => (v > 0 ? `${v}%+` : "Any")}

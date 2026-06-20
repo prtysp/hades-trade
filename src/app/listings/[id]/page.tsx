@@ -7,6 +7,7 @@ import ArtifactBadge from "@/components/ArtifactBadge";
 import InterestButton from "@/components/InterestButton";
 import InterestsList from "@/components/InterestsList";
 import { categoryStyles, categoryEmojis } from "@/lib/artifact-styles";
+import ShareButton from "@/components/ShareButton";
 
 function parseListingDescription(description: string | null): { cleanDescription: string; wantedPrefs: { category: string; minBonusPct: number; minLevel: number }[] } {
   if (!description) return { cleanDescription: "", wantedPrefs: [] };
@@ -49,7 +50,7 @@ export default async function ListingPage({
   const listing = await prisma.listing.findUnique({
     where: { id },
     include: {
-      player: { select: { id: true, username: true, corporation: true } },
+      player: { select: { id: true, username: true, corporation: true, discordUsername: true } },
       listingArtifacts: { include: { artifact: true } },
     },
   });
@@ -95,10 +96,11 @@ export default async function ListingPage({
               {" · "}{listing.player.corporation}
             </p>
           </div>
-          <div className="text-left sm:text-right shrink-0">
+          <div className="text-left sm:text-right shrink-0 flex flex-col items-end gap-1.5">
             <span className="text-xs font-medium text-[var(--text-dim)]">
               {isArchived ? `Archived ${listing.archivedAt ? new Date(listing.archivedAt).toLocaleDateString() : ""}` : `Expires in ${timeUntilExpiry(listing.expiresAt)}`}
             </span>
+            <ShareButton listingId={listing.id} discordUsername={listing.player.discordUsername} />
           </div>
         </div>
 

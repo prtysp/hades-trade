@@ -14,6 +14,11 @@ model Player {
   theme            String  @default("dracula")
   font             String  @default("sans")
   osNotifications  Boolean @default(true)
+  showInventory  Boolean @default(true)
+  showListings   Boolean @default(true)
+  showArchived   Boolean @default(false)
+  showPreferences Boolean @default(false)
+  discordUsername String?
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
   artifacts     Artifact[]

@@ -186,7 +186,7 @@ export default function PreferenceForm({ playerId, initial }: PreferenceFormProp
                 <BonusStepperInput
                   label="Min Bonus %" suffix="%"
                   value={t.minBonusPct} onChange={(v) => updateThreshold(t.category, "minBonusPct", v)}
-                  min={0} max={500}
+                  min={0} max={360}
                 />
                 <LevelSelector
                   label="Min Level"

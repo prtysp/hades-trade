@@ -3,6 +3,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { archiveExpiredListings } from "@/lib/archive";
 import { getCurrentPlayer } from "@/lib/auth";
+import PrivacyToggle from "@/components/PrivacyToggle";
 import PreferenceForm from "@/components/PreferenceForm";
 import CreateListingForm from "@/components/CreateListingForm";
 import AddArtifactForm from "@/components/AddArtifactForm";
@@ -73,6 +74,10 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
   await archiveExpiredListings();
 
   const isOwnProfile = currentPlayer?.id === id;
+  const canViewInventory = isOwnProfile || player.showInventory;
+  const canViewListings = isOwnProfile || player.showListings;
+  const canViewArchived = isOwnProfile || player.showArchived;
+  const canViewPreferences = isOwnProfile || player.showPreferences;
 
   // Separate active and archived artifacts
   const activeArtifacts = player.artifacts.filter((a) => !a.archived);
@@ -148,6 +153,9 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
               {player.username}
             </h1>
             <p className="text-sm text-[var(--text-muted)]">{player.corporation}</p>
+            {player.discordUsername && (
+              <p className="text-xs text-[var(--text-dim)] mt-0.5">Discord: {player.discordUsername}</p>
+            )}
           </div>
           {isOwnProfile && (
             <Link
@@ -184,7 +192,7 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
       )}
 
       {/* ── Artifacts section ── */}
-      {isOwnProfile ? (
+      {canViewInventory && (isOwnProfile ? (
         <ArtifactProvider
           playerId={id}
           initialArtifacts={activeArtifacts.map((a) => ({
@@ -222,10 +230,16 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
             </div>
           )}
         </div>
+      ))}
+      {!canViewInventory && !isOwnProfile && (
+        <div className="mt-6">
+          <h2 className="text-lg font-semibold text-[var(--text)] mb-3">Artifacts</h2>
+          <p className="text-sm text-[var(--text-dim)]">This player has chosen to keep their inventory private.</p>
+        </div>
       )}
 
       {/* ── Active Listings section ── */}
-      {isOwnProfile ? (
+      {canViewListings && (isOwnProfile ? (
         <ArtifactProvider
           playerId={id}
           initialArtifacts={activeArtifacts.map((a) => ({
@@ -265,10 +279,16 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
             </div>
           )}
         </div>
+      ))}
+      {!canViewListings && !isOwnProfile && (
+        <div className="mt-6">
+          <h2 className="text-lg font-semibold text-[var(--text)] mb-3">Active Listings</h2>
+          <p className="text-sm text-[var(--text-dim)]">This player has chosen to keep their listings private.</p>
+        </div>
       )}
 
-      {/* ── Trade Preferences (own profile only) ── */}
-      {isOwnProfile && (
+      {/* ── Trade Preferences ── */}
+      {canViewPreferences && (
         <div className="mt-6">
           <h2 className="text-lg font-semibold text-[var(--text)] mb-3">
             Trade Preferences
@@ -299,15 +319,27 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
           </div>
         </div>
       )}
+      {!canViewPreferences && !isOwnProfile && (
+        <div className="mt-6">
+          <h2 className="text-lg font-semibold text-[var(--text)] mb-3">Trade Preferences</h2>
+          <p className="text-sm text-[var(--text-dim)]">This player has chosen to keep their preferences private.</p>
+        </div>
+      )}
 
       {/* ── Archive / History Section ── */}
-      {isOwnProfile && (
+      {canViewArchived && (
         <ArchiveSection
           archivedArtifacts={archivedArtifacts}
           archivedListings={archivedListings}
           completedTrades={completedTrades}
           playerId={id}
         />
+      )}
+      {!canViewArchived && !isOwnProfile && (
+        <div className="mt-6">
+          <h2 className="text-lg font-semibold text-[var(--text)] mb-3">Archive & History</h2>
+          <p className="text-sm text-[var(--text-dim)]">This player has chosen to keep their archive private.</p>
+        </div>
       )}
     </div>
   );

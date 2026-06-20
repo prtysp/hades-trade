@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentPlayer } from "@/lib/auth";
 import ThemeSelector from "@/components/ThemeSelector";
 import OsNotificationToggle from "@/components/OsNotificationToggle";
+import PrivacyToggle from "@/components/PrivacyToggle";
 
 export default async function SettingsPage() {
   const player = await getCurrentPlayer();
@@ -27,8 +28,13 @@ export default async function SettingsPage() {
             <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Corporation</label>
             <p className="text-[var(--text)]">{player.corporation}</p>
           </div>
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Discord Username</label>
+            <p className="text-[var(--text)]">{player.discordUsername ?? <span className="text-[var(--text-dim)]">Not set</span>}</p>
+            <p className="text-[10px] text-[var(--text-dim)] mt-0.5">Optional — share your Discord for trade coordination</p>
+          </div>
         </div>
-        <form action="/api/settings/corporation" method="POST">
+        <form action="/api/settings/corporation" method="POST" className="space-y-3">
           <div className="flex gap-2">
             <input
               type="text"
@@ -45,6 +51,21 @@ export default async function SettingsPage() {
               Update
             </button>
           </div>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              name="discordUsername"
+              defaultValue={player.discordUsername ?? ""}
+              className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--bg-input)] px-3 py-2 text-[var(--text)] text-sm focus:border-[var(--border-focus)] focus:outline-none"
+              placeholder="e.g. playername#1234 or username"
+            />
+            <button
+              type="submit"
+              className="rounded-lg border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-muted)] hover:border-[var(--border-hover)] hover:text-[var(--text)] transition"
+            >
+              Save
+            </button>
+          </div>
         </form>
       </div>
 
@@ -58,6 +79,38 @@ export default async function SettingsPage() {
       <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 sm:p-6">
         <h2 className="text-lg sm:text-xl font-semibold text-[var(--text)] mb-4">Notifications</h2>
         <OsNotificationToggle playerId={player.id} initialEnabled={player.osNotifications} />
+      </div>
+
+      {/* Privacy section */}
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 sm:p-6">
+        <h2 className="text-lg sm:text-xl font-semibold text-[var(--text)] mb-4">Privacy</h2>
+        <p className="text-xs text-[var(--text-muted)] mb-4">Control what other players can see on your profile.</p>
+        <div className="space-y-3">
+          <PrivacyToggle
+            label="Show active inventory"
+            description="Other players can see your artifacts available for trade"
+            checked={player.showInventory}
+            field="showInventory"
+          />
+          <PrivacyToggle
+            label="Show active listings"
+            description="Other players can see your current trade listings"
+            checked={player.showListings}
+            field="showListings"
+          />
+          <PrivacyToggle
+            label="Show archived items"
+            description="Other players can see your archived listings and artifacts"
+            checked={player.showArchived}
+            field="showArchived"
+          />
+          <PrivacyToggle
+            label="Show trade preferences"
+            description="Other players can see what artifacts you're looking for"
+            checked={player.showPreferences}
+            field="showPreferences"
+          />
+        </div>
       </div>
     </div>
   );

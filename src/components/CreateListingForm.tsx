@@ -177,7 +177,7 @@ function WantedPrefCard({ value, onChange, onRemove }: {
         <button type="button" onClick={onRemove} className="text-xs text-[var(--text-dim)] hover:text-[var(--red)] transition">Remove</button>
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <BonusStepperInput label="Min Bonus %" suffix="%" value={value.minBonusPct} onChange={(v) => onChange({ ...value, minBonusPct: v })} min={0} max={500} />
+        <BonusStepperInput label="Min Bonus %" suffix="%" value={value.minBonusPct} onChange={(v) => onChange({ ...value, minBonusPct: v })} min={0} max={360} />
         <div>
           <label className="block text-[10px] font-medium text-[var(--text-muted)] mb-1">Min Level</label>
           <div className="flex gap-1">

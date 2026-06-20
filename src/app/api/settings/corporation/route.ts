@@ -11,6 +11,7 @@ export async function POST(req: NextRequest) {
 
   const formData = await req.formData();
   const corporation = (formData.get("corporation") as string)?.trim();
+  const discordUsername = (formData.get("discordUsername") as string)?.trim() || null;
 
   if (!corporation || corporation.length < 1) {
     return NextResponse.json({ error: "Corporation name is required" }, { status: 400 });
@@ -18,7 +19,10 @@ export async function POST(req: NextRequest) {
 
   await prisma.player.update({
     where: { id: player.id },
-    data: { corporation },
+    data: {
+      corporation,
+      ...(discordUsername !== undefined && { discordUsername }),
+    },
   });
 
   revalidatePath("/settings");

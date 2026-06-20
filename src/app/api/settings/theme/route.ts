@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { themeId, fontId, osNotifications } = body;
+  const { themeId, fontId, osNotifications, showInventory, showListings, showArchived, showPreferences } = body;
 
   const data: Record<string, string | boolean> = {};
 
@@ -24,6 +24,18 @@ export async function POST(req: NextRequest) {
 
   if (typeof osNotifications === "boolean") {
     data.osNotifications = osNotifications;
+  }
+  if (typeof showInventory === "boolean") {
+    data.showInventory = showInventory;
+  }
+  if (typeof showListings === "boolean") {
+    data.showListings = showListings;
+  }
+  if (typeof showArchived === "boolean") {
+    data.showArchived = showArchived;
+  }
+  if (typeof showPreferences === "boolean") {
+    data.showPreferences = showPreferences;
   }
 
   if (Object.keys(data).length === 0) {

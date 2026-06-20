@@ -7,6 +7,7 @@ export async function GET(req: NextRequest) {
   const category = searchParams.get("category");
 
   const where = {
+    archived: false,
     ...(playerId ? { playerId } : {}),
     ...(category ? { category: category as "COMBAT" | "TRANSPORT" | "MINING" | "DRONE" | "WEAPON" | "SHIELD" } : {}),
   };
@@ -34,6 +35,13 @@ export async function POST(req: NextRequest) {
   if (level < 3 || level > 12) {
     return NextResponse.json(
       { error: "Level must be between 3 and 12" },
+      { status: 400 }
+    );
+  }
+
+  if (bonusPct < 0 || bonusPct > 360) {
+    return NextResponse.json(
+      { error: "Bonus % must be between 0 and 360" },
       { status: 400 }
     );
   }

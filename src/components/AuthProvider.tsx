@@ -8,6 +8,11 @@ interface Player {
   corporation: string;
   theme: string;
   osNotifications: boolean;
+  showInventory: boolean;
+  showListings: boolean;
+  showArchived: boolean;
+  showPreferences: boolean;
+  discordUsername: string | null;
 }
 
 interface AuthContextType {
