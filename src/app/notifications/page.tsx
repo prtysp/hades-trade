@@ -33,7 +33,11 @@ const tradeActionTypes = new Set(["INTEREST_ACCEPTED", "TRADE_CONFIRMATION_NEEDE
 
 export default function NotificationsPage() {
   const { player: authPlayer, loading: authLoading } = useAuth();
-  const { refresh } = useNotifications();
+  const { refresh, osNotificationPermission, requestOsNotificationPermission } = useNotifications();
+
+  const handleEnableOs = async () => {
+    await requestOsNotificationPermission();
+  };
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [actingId, setActingId] = useState<string | null>(null);
@@ -198,6 +202,22 @@ export default function NotificationsPage() {
         </div>
       </div>
 
+      {osNotificationPermission !== "granted" && osNotificationPermission !== "denied" && (
+        <div className="mb-4 rounded-xl border border-[var(--accent)]/30 bg-[var(--accent-bg)] p-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🔔</span>
+            <p className="text-xs text-[var(--text)]">
+              Enable OS notifications to get alerted about new trades even when the tab is closed.
+            </p>
+          </div>
+          <button
+            onClick={handleEnableOs}
+            className="shrink-0 rounded-lg bg-[var(--accent)] px-3 py-1 text-xs font-semibold text-white hover:brightness-110 transition"
+          >
+            Enable
+          </button>
+        </div>
+      )}
       {loading ? (
         <p className="text-[var(--text-dim)]">Loading…</p>
       ) : notifications.length === 0 ? (

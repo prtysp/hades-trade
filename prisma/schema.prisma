@@ -11,8 +11,9 @@ model Player {
   username      String     @unique
   passwordHash  String  @default("")
   corporation   String
-  theme         String     @default("dracula")
-  font          String     @default("sans")
+  theme            String  @default("dracula")
+  font             String  @default("sans")
+  osNotifications  Boolean @default(true)
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
   artifacts     Artifact[]

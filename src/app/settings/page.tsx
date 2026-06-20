@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentPlayer } from "@/lib/auth";
 import ThemeSelector from "@/components/ThemeSelector";
+import OsNotificationToggle from "@/components/OsNotificationToggle";
 
 export default async function SettingsPage() {
   const player = await getCurrentPlayer();
@@ -51,6 +52,12 @@ export default async function SettingsPage() {
       <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 sm:p-6">
         <h2 className="text-lg sm:text-xl font-semibold text-[var(--text)] mb-4">Appearance</h2>
         <ThemeSelector currentTheme={player.theme} playerId={player.id} />
+      </div>
+
+      {/* Notifications section */}
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 sm:p-6">
+        <h2 className="text-lg sm:text-xl font-semibold text-[var(--text)] mb-4">Notifications</h2>
+        <OsNotificationToggle playerId={player.id} initialEnabled={player.osNotifications} />
       </div>
     </div>
   );

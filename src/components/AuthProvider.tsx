@@ -6,6 +6,8 @@ interface Player {
   id: string;
   username: string;
   corporation: string;
+  theme: string;
+  osNotifications: boolean;
 }
 
 interface AuthContextType {

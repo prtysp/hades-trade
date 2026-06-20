@@ -10,9 +10,9 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { themeId, fontId } = body;
+  const { themeId, fontId, osNotifications } = body;
 
-  const data: Record<string, string> = {};
+  const data: Record<string, string | boolean> = {};
 
   if (themeId && themes[themeId]) {
     data.theme = themeId;
@@ -20,6 +20,10 @@ export async function POST(req: NextRequest) {
 
   if (fontId && fontOptions.find((f) => f.id === fontId)) {
     data.font = fontId;
+  }
+
+  if (typeof osNotifications === "boolean") {
+    data.osNotifications = osNotifications;
   }
 
   if (Object.keys(data).length === 0) {
