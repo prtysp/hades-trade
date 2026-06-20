@@ -7,6 +7,24 @@ import ArtifactBadge from "@/components/ArtifactBadge";
 import InterestButton from "@/components/InterestButton";
 import InterestsList from "@/components/InterestsList";
 
+const categoryEmojis: Record<string, string> = {
+  COMBAT: "⚔️", TRANSPORT: "🚀", MINING: "⛏️", DRONE: "🤖", WEAPON: "🔫", SHIELD: "🛡️",
+};
+
+function parseListingDescription(description: string | null): { cleanDescription: string; wantedPrefs: { category: string; minBonusPct: number; minLevel: number }[] } {
+  if (!description) return { cleanDescription: "", wantedPrefs: [] };
+  const marker = "__WANTED_PREFS__";
+  const idx = description.indexOf(marker);
+  if (idx === -1) return { cleanDescription: description, wantedPrefs: [] };
+  const cleanDescription = description.substring(0, idx).trim();
+  try {
+    const prefs = JSON.parse(description.substring(idx + marker.length));
+    return { cleanDescription, wantedPrefs: Array.isArray(prefs) ? prefs : [] };
+  } catch {
+    return { cleanDescription, wantedPrefs: [] };
+  }
+}
+
 function timeUntilExpiry(expiresAt: Date | string): string {
   const diff = new Date(expiresAt).getTime() - Date.now();
   if (diff <= 0) return "Expired";
@@ -43,6 +61,7 @@ export default async function ListingPage({
 
   const offering = listing.listingArtifacts.filter((la) => la.role === "OFFERING");
   const wanting = listing.listingArtifacts.filter((la) => la.role === "WANTING");
+  const { cleanDescription, wantedPrefs } = parseListingDescription(listing.description);
   const isArchived = listing.status === "ARCHIVED";
   const isOwnListing = currentPlayer?.id === listing.playerId;
   const isTrade = listing.priceType === "TRADE";
@@ -86,8 +105,8 @@ export default async function ListingPage({
           </div>
         </div>
 
-        {listing.description && (
-          <p className="mt-4 text-sm text-[var(--text)]">{listing.description}</p>
+        {cleanDescription && (
+          <p className="mt-4 text-sm text-[var(--text)]">{cleanDescription}</p>
         )}
 
         {isDonation && listing.donationAmount != null && (
@@ -115,6 +134,27 @@ export default async function ListingPage({
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
             {wanting.map((la) => (
               <ArtifactBadge key={la.artifact.id} category={la.artifact.category} bonusPct={la.artifact.bonusPct} level={la.artifact.level} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {isTrade && wantedPrefs.length > 0 && (
+        <div className="mt-6">
+          <h2 className="text-lg font-semibold text-[var(--amber)] mb-3">Wanted (by preference)</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {wantedPrefs.map((wp, i) => (
+              <div key={i} className="rounded-lg border border-[var(--amber)]/30 bg-[var(--amber-bg)] p-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">{categoryEmojis[wp.category] || "?"}</span>
+                  <span className="text-sm font-medium text-[var(--text)]">{wp.category.charAt(0)}{wp.category.slice(1).toLowerCase()}</span>
+                </div>
+                <div className="mt-1.5 flex gap-3 text-xs text-[var(--text-muted)]">
+                  {wp.minBonusPct > 0 && <span>Min bonus: <span className="text-[var(--text)]">{wp.minBonusPct}%+</span></span>}
+                  {wp.minLevel > 3 && <span>Min level: <span className="text-[var(--text)]">Lv.{wp.minLevel}+</span></span>}
+                  {wp.minBonusPct === 0 && wp.minLevel <= 3 && <span className="text-[var(--text-dim)]">Any bonus/level</span>}
+                </div>
+              </div>
             ))}
           </div>
         </div>

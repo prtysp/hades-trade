@@ -1,6 +1,24 @@
 import Link from "next/link";
 import ArtifactBadge from "./ArtifactBadge";
 
+const categoryEmojis: Record<string, string> = {
+  COMBAT: "⚔️", TRANSPORT: "🚀", MINING: "⛏️", DRONE: "🤖", WEAPON: "🔫", SHIELD: "🛡️",
+};
+
+function parseListingDescription(description: string | null): { cleanDescription: string; wantedPrefs: { category: string; minBonusPct: number; minLevel: number }[] } {
+  if (!description) return { cleanDescription: "", wantedPrefs: [] };
+  const marker = "__WANTED_PREFS__";
+  const idx = description.indexOf(marker);
+  if (idx === -1) return { cleanDescription: description, wantedPrefs: [] };
+  const cleanDescription = description.substring(0, idx).trim();
+  try {
+    const prefs = JSON.parse(description.substring(idx + marker.length));
+    return { cleanDescription, wantedPrefs: Array.isArray(prefs) ? prefs : [] };
+  } catch {
+    return { cleanDescription, wantedPrefs: [] };
+  }
+}
+
 interface ListingArtifact {
   artifact: { id: string; category: string; bonusPct: number; level: number };
   role: "OFFERING" | "WANTING";
@@ -53,6 +71,7 @@ function PriceBadge({ priceType, donationAmount }: { priceType: string; donation
 export default function ListingCard({ listing }: { listing: Listing }) {
   const offering = listing.listingArtifacts.filter((la) => la.role === "OFFERING");
   const wanting = listing.listingArtifacts.filter((la) => la.role === "WANTING");
+  const { cleanDescription, wantedPrefs } = parseListingDescription(listing.description);
   const isArchived = listing.status === "ARCHIVED";
   const isTrade = listing.priceType === "TRADE";
   const isDonation = listing.priceType === "DONATION";
@@ -79,8 +98,8 @@ export default function ListingCard({ listing }: { listing: Listing }) {
           </span>
         </p>
 
-        {listing.description && (
-          <p className="mt-2 text-xs sm:text-sm text-[var(--text)] line-clamp-2">{listing.description}</p>
+        {cleanDescription && (
+          <p className="mt-2 text-xs sm:text-sm text-[var(--text)] line-clamp-2">{cleanDescription}</p>
         )}
 
         {offering.length > 0 && (
@@ -100,6 +119,21 @@ export default function ListingCard({ listing }: { listing: Listing }) {
             <div className="flex flex-wrap gap-1.5">
               {wanting.map((la) => (
                 <ArtifactBadge key={la.artifact.id} category={la.artifact.category as any} bonusPct={la.artifact.bonusPct} level={la.artifact.level} compact />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {isTrade && wantedPrefs.length > 0 && (
+          <div className="mt-2">
+            <p className="text-xs font-medium uppercase tracking-wider text-[var(--amber)] mb-1.5">Wanted (by preference)</p>
+            <div className="flex flex-wrap gap-1">
+              {wantedPrefs.map((wp, i) => (
+                <span key={i} className="inline-flex items-center gap-1 rounded-full border border-[var(--amber)]/30 bg-[var(--amber-bg)] px-2 py-0.5 text-[10px] text-[var(--amber)]">
+                  {categoryEmojis[wp.category] || "?"} {wp.category.charAt(0)}{wp.category.slice(1).toLowerCase()}
+                  {wp.minBonusPct > 0 && <span className="opacity-70">+{wp.minBonusPct}%+</span>}
+                  {wp.minLevel > 3 && <span className="opacity-70">Lv.{wp.minLevel}+</span>}
+                </span>
               ))}
             </div>
           </div>

@@ -4,6 +4,10 @@ import Link from "next/link";
 import ArtifactBadge from "./ArtifactBadge";
 import DeleteButton from "./DeleteButton";
 
+const categoryEmojis: Record<string, string> = {
+  COMBAT: "⚔️", TRANSPORT: "🚀", MINING: "⛏️", DRONE: "🤖", WEAPON: "🔫", SHIELD: "🛡️",
+};
+
 interface ListingArtifact {
   artifact: { id: string; category: string; bonusPct: number; level: number };
   role: string;
@@ -29,6 +33,21 @@ function timeUntilExpiry(expiresAt: Date | string): string {
   return `${mins}m`;
 }
 
+/** Parse wanted prefs and clean description from a listing */
+function parseListingDescription(description: string | null): { cleanDescription: string; wantedPrefs: { category: string; minBonusPct: number; minLevel: number }[] } {
+  if (!description) return { cleanDescription: "", wantedPrefs: [] };
+  const marker = "__WANTED_PREFS__";
+  const idx = description.indexOf(marker);
+  if (idx === -1) return { cleanDescription: description, wantedPrefs: [] };
+  const cleanDescription = description.substring(0, idx).trim();
+  try {
+    const prefs = JSON.parse(description.substring(idx + marker.length));
+    return { cleanDescription, wantedPrefs: Array.isArray(prefs) ? prefs : [] };
+  } catch {
+    return { cleanDescription, wantedPrefs: [] };
+  }
+}
+
 interface Props {
   listing: Listing;
   isOwnProfile: boolean;
@@ -37,6 +56,7 @@ interface Props {
 export default function ListingCardWithDelete({ listing, isOwnProfile }: Props) {
   const off = listing.listingArtifacts.filter((la) => la.role === "OFFERING");
   const want = listing.listingArtifacts.filter((la) => la.role === "WANTING");
+  const { cleanDescription, wantedPrefs } = parseListingDescription(listing.description);
 
   return (
     <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 sm:p-5 transition hover:border-[var(--border-hover)] relative group">
@@ -63,7 +83,7 @@ export default function ListingCardWithDelete({ listing, isOwnProfile }: Props) 
           </span>
           <span className="text-xs text-[var(--text-dim)] shrink-0">{timeUntilExpiry(listing.expiresAt)}</span>
         </div>
-        {listing.description && <p className="mt-2 text-xs sm:text-sm text-[var(--text)] line-clamp-2">{listing.description}</p>}
+        {cleanDescription && <p className="mt-2 text-xs sm:text-sm text-[var(--text)] line-clamp-2">{cleanDescription}</p>}
         {off.length > 0 && (
           <div className="mt-2">
             <p className="text-xs font-medium uppercase tracking-wider text-[var(--green)] mb-1">Offering</p>
@@ -77,6 +97,20 @@ export default function ListingCardWithDelete({ listing, isOwnProfile }: Props) 
             <p className="text-xs font-medium uppercase tracking-wider text-[var(--amber)] mb-1">Wanting</p>
             <div className="flex flex-wrap gap-1">
               {want.map((la) => <ArtifactBadge key={la.artifact.id} category={la.artifact.category as any} bonusPct={la.artifact.bonusPct} level={la.artifact.level} compact />)}
+            </div>
+          </div>
+        )}
+        {wantedPrefs.length > 0 && (
+          <div className="mt-2">
+            <p className="text-xs font-medium uppercase tracking-wider text-[var(--amber)] mb-1">Wanted (by preference)</p>
+            <div className="flex flex-wrap gap-1">
+              {wantedPrefs.map((wp, i) => (
+                <span key={i} className="inline-flex items-center gap-1 rounded-full border border-[var(--amber)]/30 bg-[var(--amber-bg)] px-2 py-0.5 text-[10px] text-[var(--amber)]">
+                  {categoryEmojis[wp.category] || "?"} {wp.category.charAt(0)}{wp.category.slice(1).toLowerCase()}
+                  {wp.minBonusPct > 0 && <span className="opacity-70">+{wp.minBonusPct}%+</span>}
+                  {wp.minLevel > 3 && <span className="opacity-70">Lv.{wp.minLevel}+</span>}
+                </span>
+              ))}
             </div>
           </div>
         )}
