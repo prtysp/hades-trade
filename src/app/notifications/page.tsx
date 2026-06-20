@@ -215,7 +215,7 @@ export default function NotificationsPage() {
           {visibleNotifications.map((n) => {
             const isActing = actingId === n.id;
             const hasListing = !!n.listing;
-            const tradeActive = !!n.trade && !["COMPLETED", "CANCELLED"].includes(n.trade?.status || "");
+            const tradeActive = !!(n.trade?.id) && !["COMPLETED", "CANCELLED"].includes(n.trade?.status || "");
 
             const canExpressInterest = !n.read && hasListing && listingNotificationTypes.has(n.type) &&
               n.listing!.listingArtifacts.some((la) => la.role === "OFFERING");
@@ -324,8 +324,8 @@ export default function NotificationsPage() {
                         </button>
                       </div>
                     )}
-                    {canAcknowledge && (
-                      <button onClick={(e) => { e.stopPropagation(); acknowledgeTrade(n.id, n.tradeId!); }} disabled={isActing}
+                    {canAcknowledge && n.trade?.id && (
+                      <button onClick={(e) => { e.stopPropagation(); acknowledgeTrade(n.id, n.trade!.id); }} disabled={isActing}
                         className="rounded-lg bg-[var(--green)] px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 transition disabled:opacity-50 whitespace-nowrap">
                         {isActing ? "…" : "✓ I've Exchanged In-Game"}
                       </button>

@@ -1,12 +1,19 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { categoryEmojis } from "@/lib/artifact-styles";
+import { useTheme } from "@/components/ThemeProvider";
 import * as Slider from "@radix-ui/react-slider";
 import { ChevronDown, X, Check } from "lucide-react";
 
 const ALL_CATEGORIES = ["COMBAT", "TRANSPORT", "MINING", "DRONE", "WEAPON", "SHIELD"] as const;
+
+/** Strip alpha channel from a hex color like #rrggbbaa -> #rrggbb */
+function stripAlpha(hex: string): string {
+  if (hex.length === 9) return hex.slice(0, 7);
+  return hex;
+}
 const ALL_TYPES = [
   { value: "FREE", label: "🆓 Free" },
   { value: "DONATION", label: "💰 Donation" },
@@ -73,6 +80,9 @@ function MultiSelectDropdown({
         ? selected[0]
         : `${selected.length} selected`;
 
+  const { theme } = useTheme();
+  const bgColor = stripAlpha(theme.bgInput);
+
   return (
     <div ref={ref} className="relative">
       <button
@@ -80,7 +90,7 @@ function MultiSelectDropdown({
         type="button"
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between rounded-lg border border-[var(--border)] px-2.5 py-1.5 text-sm text-[var(--text)] hover:border-[var(--border-hover)] transition"
-        style={{ backgroundColor: "var(--bg-input)" }}
+        style={{ backgroundColor: bgColor }}
       >
         <span className="truncate">
           <span className="text-[var(--text-muted)] mr-1">{label}:</span>
@@ -92,7 +102,7 @@ function MultiSelectDropdown({
         <div
           ref={dropdownRef}
           className="absolute top-full left-0 right-0 mt-1 rounded-lg border border-[var(--border)] shadow-xl z-[9999] max-h-60 overflow-y-auto"
-          style={{ backgroundColor: "var(--bg-input)" }}
+          style={{ backgroundColor: bgColor }}
         >
           <div className="p-1.5 space-y-0.5">
             {options.map((opt) => {
