@@ -1,10 +1,9 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { categoryEmojis } from "@/lib/artifact-styles";
 import * as Slider from "@radix-ui/react-slider";
-import * as Popover from "@radix-ui/react-popover";
 import { ChevronDown, X, Check } from "lucide-react";
 
 const ALL_CATEGORIES = ["COMBAT", "TRANSPORT", "MINING", "DRONE", "WEAPON", "SHIELD"] as const;
@@ -13,6 +12,16 @@ const ALL_TYPES = [
   { value: "DONATION", label: "💰 Donation" },
   { value: "TRADE", label: "🔄 Trade" },
 ] as const;
+
+function forceBg(el: HTMLElement | null) {
+  if (el) {
+    el.style.setProperty("background-color", "var(--bg-input)", "important");
+    // Also force on parent (the Radix portal wrapper)
+    if (el.parentElement) {
+      el.parentElement.style.setProperty("background-color", "var(--bg-input)", "important");
+    }
+  }
+}
 
 function MultiSelectDropdown({
   label,
@@ -27,6 +36,11 @@ function MultiSelectDropdown({
   onChange: (values: string[]) => void;
   emojiMap?: Record<string, string>;
 }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   const toggle = (value: string) => {
     if (selected.includes(value)) {
       onChange(selected.filter((v) => v !== value));
@@ -34,6 +48,23 @@ function MultiSelectDropdown({
       onChange([...selected, value]);
     }
   };
+
+  useEffect(() => {
+    if (open && dropdownRef.current) {
+      forceBg(dropdownRef.current);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
 
   const displayText =
     selected.length === 0
@@ -43,26 +74,27 @@ function MultiSelectDropdown({
         : `${selected.length} selected`;
 
   return (
-    <Popover.Root>
-      <Popover.Trigger asChild>
-        <button
-          type="button"
-          className="w-full flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--bg-input)] !bg-[var(--bg-input)] px-2.5 py-1.5 text-sm text-[var(--text)] hover:border-[var(--border-hover)] transition"
+    <div ref={ref} className="relative">
+      <button
+        ref={btnRef}
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between rounded-lg border border-[var(--border)] px-2.5 py-1.5 text-sm text-[var(--text)] hover:border-[var(--border-hover)] transition"
+        style={{ backgroundColor: "var(--bg-input)" }}
+      >
+        <span className="truncate">
+          <span className="text-[var(--text-muted)] mr-1">{label}:</span>
+          {displayText}
+        </span>
+        <ChevronDown className={`w-3.5 h-3.5 text-[var(--text-muted)] shrink-0 ml-1 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div
+          ref={dropdownRef}
+          className="absolute top-full left-0 right-0 mt-1 rounded-lg border border-[var(--border)] shadow-xl z-[9999] max-h-60 overflow-y-auto"
+          style={{ backgroundColor: "var(--bg-input)" }}
         >
-          <span className="truncate">
-            <span className="text-[var(--text-muted)] mr-1">{label}:</span>
-            {displayText}
-          </span>
-          <ChevronDown className="w-3.5 h-3.5 text-[var(--text-muted)] shrink-0 ml-1" />
-        </button>
-      </Popover.Trigger>
-      <Popover.Portal>
-        <Popover.Content
-          sideOffset={4}
-          align="start"
-        >
-          <div className="z-[9999] w-56 rounded-lg border border-[var(--border)] shadow-xl p-1.5" style={{ backgroundColor: 'var(--bg-input)' }}>
-          <div className="space-y-0.5 max-h-60 overflow-y-auto">
+          <div className="p-1.5 space-y-0.5">
             {options.map((opt) => {
               const value = typeof opt === "string" ? opt : opt.value;
               const displayLabel = typeof opt === "string" ? opt : opt.label;
@@ -75,16 +107,14 @@ function MultiSelectDropdown({
                   className={`w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-xs transition ${
                     isSelected
                       ? "bg-[var(--accent-bg)] text-[var(--accent-text)]"
-                      : "text-[var(--text-muted)] hover:bg-[var(--bg-input)] hover:text-[var(--text)]"
+                      : "text-[var(--text-muted)] hover:bg-[var(--bg-card)] hover:text-[var(--text)]"
                   }`}
                 >
                   <div
                     className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${
-                      isSelected
-                        ? "bg-[var(--accent)] border-[var(--accent)]"
-                        : "border-[var(--border)]"
+                      isSelected ? "bg-[var(--accent)] border-[var(--accent)]" : "border-[var(--border)]"
                     }`}
-                    style={!isSelected ? { backgroundColor: "var(--bg-input)" } : undefined}
+                    style={!isSelected ? { backgroundColor: "var(--bg-card)" } : undefined}
                   >
                     {isSelected && <Check className="w-2.5 h-2.5 text-white" />}
                   </div>
@@ -95,7 +125,7 @@ function MultiSelectDropdown({
             })}
           </div>
           {selected.length > 0 && (
-            <div className="pt-1.5 mt-1.5 border-t border-[var(--border)]">
+            <div className="p-1.5 border-t border-[var(--border)]">
               <button
                 type="button"
                 onClick={() => onChange([])}
@@ -105,10 +135,9 @@ function MultiSelectDropdown({
               </button>
             </div>
           )}
-          </div>
-        </Popover.Content>
-      </Popover.Portal>
-    </Popover.Root>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -135,9 +164,7 @@ function SliderFilter({
     <div>
       <div className="flex items-center justify-between mb-1">
         <label className="text-xs font-medium text-[var(--text-muted)]">{label}</label>
-        <span className="text-xs font-medium text-[var(--text)] tabular-nums">
-          {formatDisplay(value)}
-        </span>
+        <span className="text-xs font-medium text-[var(--text)] tabular-nums">{formatDisplay(value)}</span>
       </div>
       <Slider.Root
         className="relative flex items-center select-none touch-none w-full h-5"
@@ -147,14 +174,8 @@ function SliderFilter({
         max={max}
         step={step}
       >
-        <Slider.Track
-          className="relative grow rounded-full h-2"
-          style={{ backgroundColor: "var(--border)" }}
-        >
-          <Slider.Range
-            className="absolute rounded-full h-full"
-            style={{ backgroundColor: "var(--accent)" }}
-          />
+        <Slider.Track className="relative grow rounded-full h-2" style={{ backgroundColor: "var(--border)" }}>
+          <Slider.Range className="absolute rounded-full h-full" style={{ backgroundColor: "var(--accent)" }} />
         </Slider.Track>
         <Slider.Thumb
           className="block w-5 h-5 rounded-full border-2 shadow-lg cursor-pointer hover:brightness-110 transition focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40"
@@ -210,22 +231,14 @@ export default function ListingFilters() {
     setMinLevel(3);
   };
 
-  const hasFilters =
-    selectedTypes.length > 0 ||
-    selectedCategories.length > 0 ||
-    minBonus > 0 ||
-    minLevel > 3;
+  const hasFilters = selectedTypes.length > 0 || selectedCategories.length > 0 || minBonus > 0 || minLevel > 3;
 
   return (
     <div className="mb-4 sm:mb-6 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 sm:p-4 space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-[var(--text-muted)]">Filters</span>
         {hasFilters && (
-          <button
-            type="button"
-            onClick={clearAll}
-            className="text-xs text-[var(--text-dim)] hover:text-[var(--text)] transition flex items-center gap-1"
-          >
+          <button type="button" onClick={clearAll} className="text-xs text-[var(--text-dim)] hover:text-[var(--text)] transition flex items-center gap-1">
             <X className="w-3 h-3" /> Clear
           </button>
         )}
