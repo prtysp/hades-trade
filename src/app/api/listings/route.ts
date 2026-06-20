@@ -115,12 +115,11 @@ export async function POST(req: NextRequest) {
     finalDescription = (finalDescription ? finalDescription + "\n\n" : "") + "__WANTED_PREFS__" + JSON.stringify(wantingPrefsList);
   }
 
-  const days = expiresInDays ?? 1;
-  if (days <= 0) {
-    return NextResponse.json({ error: "expiresInDays must be greater than 0" }, { status: 400 });
+  const totalMinutes = (expiresInDays ?? 1) * 24 * 60;
+  if (totalMinutes <= 0) {
+    return NextResponse.json({ error: "Expiration must be greater than 0" }, { status: 400 });
   }
-  const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + days);
+  const expiresAt = new Date(Date.now() + totalMinutes * 60 * 1000);
 
     // Deduplicate: remove any wanting IDs that are also in offering
     const offeringIds = [...new Set((offering || []) as string[])];
