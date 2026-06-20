@@ -22,7 +22,7 @@ export default function ArtifactBadge({ category, bonusPct, level, compact }: Ar
         className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium"
         style={inlineStyle}
       >
-        {categoryEmojis[category]} {category} L{level}
+        {categoryEmojis[category]} {category} L{level} +{bonusPct}%
       </span>
     );
   }
