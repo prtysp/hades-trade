@@ -73,7 +73,7 @@ export default function InterestsList({ listingId, listingArtifacts }: Interests
   const getArtifactLabel = (artifactId: string) => {
     const la = listingArtifacts.find((a) => a.artifactId === artifactId);
     if (!la) return artifactId;
-    return `${la.artifact.category} +${la.artifact.bonusPct}% Lv.${la.artifact.level}`;
+    return `${la.artifact.category} +${la.artifact.bonusPct}% L${la.artifact.level}`;
   };
 
   const getArtifactCategory = (artifactId: string) => {
@@ -260,7 +260,7 @@ export default function InterestsList({ listingId, listingArtifacts }: Interests
                                 <span className="text-xs font-medium text-[var(--text)]">{cat}</span>
                               </div>
                               <div className="text-xs text-[var(--text-muted)]">
-                                +{bonus}% · Lv.{level}
+                                +{bonus}% · L{level}
                               </div>
                               {isSelected && (
                                 <span className="text-xs text-[var(--green)]">✓ Accepting</span>

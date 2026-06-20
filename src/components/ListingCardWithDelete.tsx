@@ -12,7 +12,7 @@ function WantedPrefBadge({ category, minBonusPct, minLevel }: { category: string
       className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium"
       style={{ backgroundColor: style.bg, color: style.text, borderColor: style.border }}
     >
-      {categoryEmojis[category as keyof typeof categoryEmojis] || "?"} {category} Lv.{minLevel}{minBonusPct > 0 && ` +${minBonusPct}%`}
+      {categoryEmojis[category as keyof typeof categoryEmojis] || "?"} {category} L{minLevel}{minBonusPct > 0 && ` +${minBonusPct}%`}
     </span>
   );
 }

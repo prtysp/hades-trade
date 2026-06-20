@@ -57,10 +57,12 @@ function BonusStepperInput({
     <div>
       <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">{label}</label>
       <div className="flex items-center gap-0">
+        <button type="button" onClick={() => onChange(clamp(value - 100))} disabled={!canStep(-100)}
+          className="h-9 w-10 rounded-l-lg border border-r-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed">−100%</button>
         <button type="button" onClick={() => onChange(clamp(value - 10))} disabled={!canStep(-10)}
-          className="h-9 w-10 rounded-l-lg border border-r-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed">−10</button>
+          className="h-9 w-10 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] transition disabled:opacity-25 disabled:cursor-not-allowed">−10%</button>
         <button type="button" onClick={() => onChange(clamp(value - 1))} disabled={!canStep(-1)}
-          className="h-9 w-9 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] transition disabled:opacity-25 disabled:cursor-not-allowed">−1</button>
+          className="h-9 w-9 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] transition disabled:opacity-25 disabled:cursor-not-allowed">−1%</button>
         {editing ? (
           <form onSubmit={(e) => { e.preventDefault(); applyDraft(); }} className="flex-1 min-w-0">
             <input ref={inputRef} type="number" step={1} min={min} max={max} value={draft} onChange={(e) => setDraft(e.target.value)} onBlur={applyDraft}
@@ -73,117 +75,85 @@ function BonusStepperInput({
           </button>
         )}
         <button type="button" onClick={() => onChange(clamp(value + 1))} disabled={!canStep(1)}
-          className="h-9 w-9 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] transition disabled:opacity-25 disabled:cursor-not-allowed">+1</button>
+          className="h-9 w-9 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] transition disabled:opacity-25 disabled:cursor-not-allowed">+1%</button>
         <button type="button" onClick={() => onChange(clamp(value + 10))} disabled={!canStep(10)}
-          className="h-9 w-10 rounded-r-lg border border-l-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed">+10</button>
+          className="h-9 w-10 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] transition disabled:opacity-25 disabled:cursor-not-allowed">+10%</button>
+        <button type="button" onClick={() => onChange(clamp(value + 100))} disabled={!canStep(100)}
+          className="h-9 w-10 rounded-r-lg border border-l-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed">+100%</button>
       </div>
     </div>
   );
 }
 
-// ─── Donation input with stepper-style buttons ───
+// ─── Donation input — single compact stepper ───
 function DonationInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const currentTotal = parseInt(value) || 0;
   const clamp = (v: number) => Math.max(0, v);
   const formatCredits = (n: number) => n >= 1000000 ? `${n / 1000000}M` : n >= 1000 ? `${n / 1000}K` : String(n);
-  const STEPS = [
-    { label: "+10K", amount: 10000 },
-    { label: "+50K", amount: 50000 },
-    { label: "+100K", amount: 100000 },
-    { label: "+1M", amount: 1000000 },
-  ];
 
   return (
-    <div className="mt-2 space-y-2.5">
+    <div className="mt-2 space-y-2">
       <label className="block text-xs font-medium text-[var(--text-muted)]">Suggested Donation</label>
-      {/* Total display with stepper buttons */}
       <div className="flex items-center gap-0">
+        <button type="button" onClick={() => onChange(String(clamp(currentTotal - 8000000)))} disabled={currentTotal < 8000000}
+          className="h-9 w-10 rounded-l-lg border border-r-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed">−8M</button>
+        <button type="button" onClick={() => onChange(String(clamp(currentTotal - 1000000)))} disabled={currentTotal < 1000000}
+          className="h-9 w-10 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] transition disabled:opacity-25 disabled:cursor-not-allowed">−1M</button>
+        <button type="button" onClick={() => onChange(String(clamp(currentTotal - 100000)))} disabled={currentTotal < 100000}
+          className="h-9 w-11 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] transition disabled:opacity-25 disabled:cursor-not-allowed">−100K</button>
         <button type="button" onClick={() => onChange(String(clamp(currentTotal - 10000)))} disabled={currentTotal < 10000}
-          className="h-9 w-10 rounded-l-lg border border-r-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed">−10K</button>
-        <button type="button" onClick={() => onChange(String(clamp(currentTotal - 1000)))} disabled={currentTotal < 1000}
-          className="h-9 w-9 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] transition disabled:opacity-25 disabled:cursor-not-allowed">−1K</button>
+          className="h-9 w-10 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] transition disabled:opacity-25 disabled:cursor-not-allowed">−10K</button>
         <div className="h-9 flex-1 min-w-0 border-y border-[var(--border)] bg-[var(--bg-card)] flex items-center justify-center px-2">
-          <span className={`text-sm font-semibold tabular-nums ${currentTotal > 0 ? "text-[var(--amber)]" : "text-[var(--text-dim)]"}`}>
-            {currentTotal > 0 ? currentTotal.toLocaleString() : "0"}
+          <span className={`text-sm font-semibold tabular-nums ${currentTotal > 0 ? 'text-[var(--amber)]' : 'text-[var(--text-dim)]'}`}>
+            {currentTotal > 0 ? formatCredits(currentTotal) : "0"}
           </span>
         </div>
-        <button type="button" onClick={() => onChange(String(clamp(currentTotal + 1000)))} disabled={currentTotal > 999999000}
-          className="h-9 w-9 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] transition disabled:opacity-25 disabled:cursor-not-allowed">+1K</button>
-        <button type="button" onClick={() => onChange(String(clamp(currentTotal + 10000)))} disabled={currentTotal > 999990000}
-          className="h-9 w-10 rounded-r-lg border border-l-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed">+10K</button>
+        <button type="button" onClick={() => onChange(String(clamp(currentTotal + 10000)))}
+          className="h-9 w-10 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] transition disabled:opacity-25 disabled:cursor-not-allowed">+10K</button>
+        <button type="button" onClick={() => onChange(String(clamp(currentTotal + 100000)))}
+          className="h-9 w-11 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] transition disabled:opacity-25 disabled:cursor-not-allowed">+100K</button>
+        <button type="button" onClick={() => onChange(String(clamp(currentTotal + 1000000)))}
+          className="h-9 w-10 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] transition disabled:opacity-25 disabled:cursor-not-allowed">+1M</button>
+        <button type="button" onClick={() => onChange(String(clamp(currentTotal + 8000000)))}
+          className="h-9 w-10 rounded-r-lg border border-l-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed">+8M</button>
       </div>
-      {/* Preset quick-add buttons */}
-      <div className="flex items-center gap-1">
-        {STEPS.map(({ label, amount }) => (
-          <button key={amount} type="button" onClick={() => onChange(String(clamp(currentTotal + amount)))}
-            className="h-8 flex-1 rounded-lg border border-[var(--border)] bg-[var(--bg-input)] text-[var(--text-muted)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] hover:text-[var(--text)] transition">
-            {label}
-          </button>
-        ))}
-      </div>
-      {currentTotal > 0 && (
-        <button type="button" onClick={() => onChange("")} className="text-xs text-[var(--text-dim)] hover:text-[var(--red)] transition">Clear</button>
-      )}
     </div>
   );
 }
 
-// ─── Expiration input with stepper-style buttons ───
+// ─── Expiration input — single compact stepper ───
 function ExpirationInput({
-  days, hours, minutes, onChange,
+  totalMinutes, onChange,
 }: {
-  days: number; hours: number; minutes: number;
-  onChange: (d: number, h: number, m: number) => void;
+  totalMinutes: number;
+  onChange: (m: number) => void;
 }) {
+  const clamp = (v: number) => Math.max(1, Math.min(525600, v));
+  const formatExpiration = (m: number) => {
+    const d = Math.floor(m / 1440);
+    const h = Math.floor((m % 1440) / 60);
+    const min = m % 60;
+    return [d > 0 && `${d}d`, h > 0 && `${h}h`, min > 0 && `${min}m`].filter(Boolean).join(" ") || "1m";
+  };
   return (
     <div>
       <label className="block text-sm font-medium text-[var(--text)] mb-2">Expiration</label>
-      <div className="space-y-2">
-        {/* Days */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-[var(--text-muted)] w-12 shrink-0">Days</span>
-          <div className="flex items-center gap-0 flex-1">
-            <button type="button" onClick={() => onChange(Math.max(0, days - 1), hours, minutes)} disabled={days < 1}
-              className="h-9 w-9 rounded-l-lg border border-r-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-sm font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed">−</button>
-            <div className="h-9 flex-1 min-w-0 border-y border-[var(--border)] bg-[var(--bg-card)] flex items-center justify-center px-2">
-              <span className="text-sm font-medium text-[var(--text)] tabular-nums">{days}</span>
-            </div>
-            <button type="button" onClick={() => onChange(Math.min(365, days + 1), hours, minutes)} disabled={days >= 365}
-              className="h-9 w-9 rounded-r-lg border border-l-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-sm font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed">+</button>
-          </div>
-          <button type="button" onClick={() => onChange(days + 1, hours, minutes)} disabled={days >= 365}
-            className="h-9 w-10 rounded-lg border border-[var(--border)] bg-[var(--bg-input)] text-[var(--text-muted)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed">+1d</button>
+      <div className="flex items-center gap-0">
+        <button type="button" onClick={() => onChange(clamp(totalMinutes - 1440))} disabled={totalMinutes <= 1440}
+          className="h-9 w-10 rounded-l-lg border border-r-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed">−1d</button>
+        <button type="button" onClick={() => onChange(clamp(totalMinutes - 60))} disabled={totalMinutes <= 60}
+          className="h-9 w-10 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] transition disabled:opacity-25 disabled:cursor-not-allowed">−1h</button>
+        <button type="button" onClick={() => onChange(clamp(totalMinutes - 30))} disabled={totalMinutes <= 30}
+          className="h-9 w-10 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] transition disabled:opacity-25 disabled:cursor-not-allowed">−30m</button>
+        <div className="h-9 flex-1 min-w-0 border-y border-[var(--border)] bg-[var(--bg-card)] flex items-center justify-center px-2">
+          <span className="text-sm font-medium text-[var(--text)] tabular-nums">{formatExpiration(totalMinutes)}</span>
         </div>
-        {/* Hours */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-[var(--text-muted)] w-12 shrink-0">Hours</span>
-          <div className="flex items-center gap-0 flex-1">
-            <button type="button" onClick={() => onChange(days, Math.max(0, hours - 1), minutes)} disabled={hours < 1}
-              className="h-9 w-9 rounded-l-lg border border-r-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-sm font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed">−</button>
-            <div className="h-9 flex-1 min-w-0 border-y border-[var(--border)] bg-[var(--bg-card)] flex items-center justify-center px-2">
-              <span className="text-sm font-medium text-[var(--text)] tabular-nums">{hours}</span>
-            </div>
-            <button type="button" onClick={() => onChange(days, Math.min(23, hours + 1), minutes)} disabled={hours >= 23}
-              className="h-9 w-9 rounded-r-lg border border-l-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-sm font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed">+</button>
-          </div>
-          <button type="button" onClick={() => onChange(days, hours + 1, minutes)} disabled={hours >= 23}
-            className="h-9 w-10 rounded-lg border border-[var(--border)] bg-[var(--bg-input)] text-[var(--text-muted)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed">+1h</button>
-        </div>
-        {/* Minutes */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-[var(--text-muted)] w-12 shrink-0">Minutes</span>
-          <div className="flex items-center gap-0 flex-1">
-            <button type="button" onClick={() => onChange(days, hours, Math.max(0, minutes - 1))} disabled={minutes < 1}
-              className="h-9 w-9 rounded-l-lg border border-r-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-sm font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed">−</button>
-            <div className="h-9 flex-1 min-w-0 border-y border-[var(--border)] bg-[var(--bg-card)] flex items-center justify-center px-2">
-              <span className="text-sm font-medium text-[var(--text)] tabular-nums">{minutes}</span>
-            </div>
-            <button type="button" onClick={() => onChange(days, hours, Math.min(59, minutes + 1))} disabled={minutes >= 59}
-              className="h-9 w-9 rounded-r-lg border border-l-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-sm font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed">+</button>
-          </div>
-          <button type="button" onClick={() => onChange(days, hours, minutes + 1)} disabled={minutes >= 59}
-            className="h-9 w-10 rounded-lg border border-[var(--border)] bg-[var(--bg-input)] text-[var(--text-muted)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed">+1m</button>
-        </div>
+        <button type="button" onClick={() => onChange(clamp(totalMinutes + 30))}
+          className="h-9 w-10 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] transition disabled:opacity-25 disabled:cursor-not-allowed">+30m</button>
+        <button type="button" onClick={() => onChange(clamp(totalMinutes + 60))}
+          className="h-9 w-10 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] transition disabled:opacity-25 disabled:cursor-not-allowed">+1h</button>
+        <button type="button" onClick={() => onChange(clamp(totalMinutes + 1440))}
+          className="h-9 w-10 rounded-r-lg border border-l-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed">+1d</button>
       </div>
     </div>
   );
@@ -263,9 +233,7 @@ export default function CreateListingForm() {
   const [wantingPrefs, setWantingPrefs] = useState<{ category: ArtifactCategory; minBonusPct: number; minLevel: number }[]>([]);
   const [priceType, setPriceType] = useState<"FREE" | "DONATION" | "TRADE">("FREE");
   const [donationAmount, setDonationAmount] = useState("");
-  const [expiresInDays, setExpiresInDays] = useState(1);
-  const [expiresInHours, setExpiresInHours] = useState(0);
-  const [expiresInMinutes, setExpiresInMinutes] = useState(0);
+  const [expiresInMinutes, setExpiresInMinutes] = useState(60);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -275,7 +243,7 @@ export default function CreateListingForm() {
 
   const toggleOffering = (id: string) => setOffering((p) => p.includes(id) ? p.filter((a) => a !== id) : [...p, id]);
   const toggleWanting = (id: string) => setWanting((p) => p.includes(id) ? p.filter((a) => a !== id) : [...p, id]);
-  const totalMinutes = expiresInDays * 24 * 60 + expiresInHours * 60 + expiresInMinutes;
+  const totalMinutes = expiresInMinutes;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -320,8 +288,7 @@ export default function CreateListingForm() {
       </div>
 
       {/* Expiration */}
-      <ExpirationInput days={expiresInDays} hours={expiresInHours} minutes={expiresInMinutes}
-        onChange={(d, h, m) => { setExpiresInDays(d); setExpiresInHours(h); setExpiresInMinutes(m); }} />
+      <ExpirationInput totalMinutes={expiresInMinutes} onChange={setExpiresInMinutes} />
 
       {/* Description */}
       <div>
@@ -336,7 +303,7 @@ export default function CreateListingForm() {
           <p className="text-sm text-[var(--text-dim)]">No artifacts to offer. Add some to your inventory first.</p>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
               {artifacts.map((art) => {
                 const selected = offering.includes(art.id);
                 return (
@@ -347,7 +314,7 @@ export default function CreateListingForm() {
                       <div className="flex items-center gap-1.5"><span className="text-sm">{categoryEmojis[art.category]}</span><span className="text-xs font-medium text-[var(--text)]">{art.category}</span></div>
                       {selected && <span className="text-[var(--green)] text-xs">✓</span>}
                     </div>
-                    <div className="mt-0.5 text-xs text-[var(--text-muted)]">+{art.bonusPct}% · Lv.{art.level}</div>
+                    <div className="mt-0.5 text-xs text-[var(--text-muted)]">+{art.bonusPct}% · L{art.level}</div>
                   </button>
                 );
               })}

@@ -146,7 +146,7 @@ export default async function ListingPage({
                 <div key={i} className="rounded-lg border p-3" style={{ backgroundColor: style.bg, color: style.text, borderColor: style.border }}>
                   <div className="flex items-center justify-between">
                     <span className="text-lg">{categoryEmojis[wp.category] || "?"}</span>
-                    <span className="text-xs font-semibold opacity-70">Lv. {wp.minLevel}{wp.minBonusPct > 0 ? ` +${wp.minBonusPct}%` : ""}</span>
+                    <span className="text-xs font-semibold opacity-70">L{wp.minLevel}{wp.minBonusPct > 0 ? ` +${wp.minBonusPct}%` : ""}</span>
                   </div>
                   <div className="mt-1 font-medium">{wp.category}</div>
                   <div className="text-sm opacity-80">{wp.minBonusPct > 0 ? `Min +${wp.minBonusPct}% bonus` : "Any bonus"}</div>

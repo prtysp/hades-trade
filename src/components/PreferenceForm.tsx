@@ -132,7 +132,7 @@ export default function PreferenceForm({ playerId, initial }: PreferenceFormProp
     ? `Interested in ${activeThresholds.map((t) => {
         const parts: string[] = [t.category];
         if (t.minBonusPct > 0) parts.push(`${t.minBonusPct}%+`);
-        if (t.minLevel > 3) parts.push(`Lv.${t.minLevel}+`);
+        if (t.minLevel > 3) parts.push(`L${t.minLevel}+`);
         return parts.join(" ");
       }).join(", ")}`
     : "No preference set";
@@ -182,7 +182,7 @@ export default function PreferenceForm({ playerId, initial }: PreferenceFormProp
                   className="text-xs text-[var(--text-dim)] hover:text-[var(--red)] transition"
                 >Remove</button>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <BonusStepperInput
                   label="Min Bonus %" suffix="%"
                   value={t.minBonusPct} onChange={(v) => updateThreshold(t.category, "minBonusPct", v)}

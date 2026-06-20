@@ -165,7 +165,7 @@ export default function InterestButton({ listingId, listingArtifacts, priceType 
                       {selected && <span className="text-[var(--green)] text-xs">✓</span>}
                     </div>
                     <div className="mt-0.5 text-xs text-[var(--text-muted)]">
-                      +{la.artifact.bonusPct}% · Lv.{la.artifact.level}
+                      +{la.artifact.bonusPct}% · L{la.artifact.level}
                     </div>
                   </button>
                 );
@@ -207,7 +207,7 @@ export default function InterestButton({ listingId, listingArtifacts, priceType 
                         {selected && <span className="text-[var(--amber)] text-xs">✓</span>}
                       </div>
                       <div className="mt-0.5 text-xs text-[var(--text-muted)]">
-                        +{art.bonusPct}% · Lv.{art.level}
+                        +{art.bonusPct}% · L{art.level}
                       </div>
                     </button>
                   );

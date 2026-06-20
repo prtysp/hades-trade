@@ -45,7 +45,7 @@ export default function CompressedArtifactBadge({ group }: CompressedArtifactBad
           )}
         </div>
         <div className="mt-1 flex items-center justify-between text-sm opacity-80">
-          <span>+{group.bonusPct}% · Lv.{group.level}</span>
+          <span>+{group.bonusPct}% · L{group.level}</span>
           <span className="text-xs opacity-60">{expanded ? "▲" : "▼"}</span>
         </div>
       </button>
@@ -60,7 +60,7 @@ export default function CompressedArtifactBadge({ group }: CompressedArtifactBad
               key={art.id}
               className="flex items-center justify-between rounded px-2 py-1 text-xs text-[var(--text)]"
             >
-              <span>{categoryEmojis[group.category]} {group.category} +{group.bonusPct}% Lv.{group.level}</span>
+              <span>{categoryEmojis[group.category]} {group.category} +{group.bonusPct}% L{group.level}</span>
               <span className="text-[var(--text-dim)]">
                 {new Date(art.createdAt).toLocaleDateString()}
               </span>

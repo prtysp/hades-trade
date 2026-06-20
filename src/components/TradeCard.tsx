@@ -119,7 +119,7 @@ export default function TradeCard({ trade, currentPlayerId }: TradeCardProps) {
           <div className="flex flex-wrap gap-1">
             {myArtifacts.map((ta) => (
               <span key={ta.id} className="inline-flex items-center gap-1 rounded-full border border-[var(--amber)]/30 bg-[var(--amber-bg)] px-2 py-0.5 text-xs text-[var(--amber)]">
-                {categoryEmojis[ta.category]} {ta.category} +{ta.bonusPct}% Lv.{ta.level}
+                {categoryEmojis[ta.category]} {ta.category} +{ta.bonusPct}% L{ta.level}
               </span>
             ))}
             {myArtifacts.length === 0 && <span className="text-xs text-[var(--text-dim)]">Nothing</span>}
@@ -130,7 +130,7 @@ export default function TradeCard({ trade, currentPlayerId }: TradeCardProps) {
           <div className="flex flex-wrap gap-1">
             {theirArtifacts.map((ta) => (
               <span key={ta.id} className="inline-flex items-center gap-1 rounded-full border border-[var(--green)]/30 bg-[var(--green-bg)] px-2 py-0.5 text-xs text-[var(--green)]">
-                {categoryEmojis[ta.category]} {ta.category} +{ta.bonusPct}% Lv.{ta.level}
+                {categoryEmojis[ta.category]} {ta.category} +{ta.bonusPct}% L{ta.level}
               </span>
             ))}
             {theirArtifacts.length === 0 && <span className="text-xs text-[var(--text-dim)]">Nothing</span>}

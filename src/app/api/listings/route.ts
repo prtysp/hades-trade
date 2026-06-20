@@ -20,10 +20,10 @@ function buildListingLabel(listing: {
 }): string {
   const offering = listing.listingArtifacts
     .filter((la) => la.role === "OFFERING")
-    .map((la) => `${la.artifact.category} +${la.artifact.bonusPct}% Lv.${la.artifact.level}`);
+    .map((la) => `${la.artifact.category} +${la.artifact.bonusPct}% L${la.artifact.level}`);
   const wanting = listing.listingArtifacts
     .filter((la) => la.role === "WANTING")
-    .map((la) => `${la.artifact.category} +${la.artifact.bonusPct}% Lv.${la.artifact.level}`);
+    .map((la) => `${la.artifact.category} +${la.artifact.bonusPct}% L${la.artifact.level}`);
 
   const parts: string[] = [];
   if (offering.length > 0) parts.push(`Offering: ${offering.join(", ")}`);
@@ -178,7 +178,7 @@ export async function POST(req: NextRequest) {
 
       if (matchedArtifacts.length > 0) {
         const artDescriptions = matchedArtifacts.map(
-          (la) => `${la.artifact.category} +${la.artifact.bonusPct}% Lv.${la.artifact.level}`
+          (la) => `${la.artifact.category} +${la.artifact.bonusPct}% L${la.artifact.level}`
         );
         notifications.push({
           playerId: pref.playerId,

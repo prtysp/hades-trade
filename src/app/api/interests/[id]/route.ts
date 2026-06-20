@@ -177,7 +177,7 @@ export async function PATCH(
     // Notify the interested player
     const tradedLabels = interest.listing.listingArtifacts
       .filter((la) => tradedOfferingIds.includes(la.artifactId))
-      .map((la) => `${la.artifact.category} +${la.artifact.bonusPct}% Lv.${la.artifact.level}`)
+      .map((la) => `${la.artifact.category} +${la.artifact.bonusPct}% L${la.artifact.level}`)
       .join(", ");
 
     await prisma.notification.create({

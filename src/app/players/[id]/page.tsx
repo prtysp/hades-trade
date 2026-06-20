@@ -122,7 +122,7 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
           .map((t) => {
             const parts: string[] = [t.category];
             if (t.minBonusPct > 0) parts.push(`${t.minBonusPct}%+`);
-            if (t.minLevel > 3) parts.push(`Lv.${t.minLevel}+`);
+            if (t.minLevel > 3) parts.push(`L${t.minLevel}+`);
             return parts.join(" ");
           })
           .join(", ")}`

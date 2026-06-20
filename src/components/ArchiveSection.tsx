@@ -197,7 +197,7 @@ export default function ArchiveSection({
                                     key={ta.id}
                                     className="inline-flex items-center gap-0.5 rounded-full border border-[var(--amber)]/20 bg-[var(--amber-bg)] px-1.5 py-0.5 text-[10px] text-[var(--amber)]"
                                   >
-                                    {categoryEmojis[ta.category]} {ta.category} +{ta.bonusPct}% Lv.{ta.level}
+                                    {categoryEmojis[ta.category]} {ta.category} +{ta.bonusPct}% L{ta.level}
                                   </span>
                                 ))}
                                 {myGiven.length === 0 && (
@@ -215,7 +215,7 @@ export default function ArchiveSection({
                                     key={ta.id}
                                     className="inline-flex items-center gap-0.5 rounded-full border border-[var(--green)]/20 bg-[var(--green-bg)] px-1.5 py-0.5 text-[10px] text-[var(--green)]"
                                   >
-                                    {categoryEmojis[ta.category]} {ta.category} +{ta.bonusPct}% Lv.{ta.level}
+                                    {categoryEmojis[ta.category]} {ta.category} +{ta.bonusPct}% L{ta.level}
                                   </span>
                                 ))}
                                 {myReceived.length === 0 && (
@@ -271,7 +271,7 @@ export default function ArchiveSection({
                               <span key={la.artifact.id}
                                 className="inline-flex items-center gap-0.5 rounded-full border border-[var(--border)] px-1.5 py-0.5 text-[10px] text-[var(--text-muted)]"
                               >
-                                {categoryEmojis[la.artifact.category]} {la.artifact.category} +{la.artifact.bonusPct}% Lv.{la.artifact.level}
+                                {categoryEmojis[la.artifact.category]} {la.artifact.category} +{la.artifact.bonusPct}% L{la.artifact.level}
                               </span>
                             ))}
                           </div>
@@ -305,7 +305,7 @@ export default function ArchiveSection({
                             <div className="flex items-center gap-2">
                               <span className="text-sm">{categoryEmojis[art.category]}</span>
                               <span className="text-xs font-medium text-[var(--text)]">
-                                {art.category} +{art.bonusPct}% Lv.{art.level}
+                                {art.category} +{art.bonusPct}% L{art.level}
                               </span>
                             </div>
                             <span className="text-[10px] text-[var(--text-dim)]">

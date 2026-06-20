@@ -256,7 +256,7 @@ export default function NotificationsPage() {
                                 .filter((ta) => (t.listerId === authPlayer.id && ta.role === "GIVEN") || (t.traderId === authPlayer.id && ta.role === "RECEIVED"))
                                 .map((ta) => (
                                   <span key={ta.id} className="inline-flex items-center gap-0.5 rounded-full border border-[var(--amber)]/20 bg-[var(--amber-bg)] px-1.5 py-0.5 text-[10px] text-[var(--amber)]">
-                                    {categoryEmojis[ta.category]} +{ta.bonusPct}% Lv.{ta.level}
+                                    {categoryEmojis[ta.category]} +{ta.bonusPct}% L{ta.level}
                                   </span>
                                 ))}
                             </div>
@@ -268,7 +268,7 @@ export default function NotificationsPage() {
                                 .filter((ta) => (t.listerId === authPlayer.id && ta.role === "RECEIVED") || (t.traderId === authPlayer.id && ta.role === "GIVEN"))
                                 .map((ta) => (
                                   <span key={ta.id} className="inline-flex items-center gap-0.5 rounded-full border border-[var(--green)]/20 bg-[var(--green-bg)] px-1.5 py-0.5 text-[10px] text-[var(--green)]">
-                                    {categoryEmojis[ta.category]} +{ta.bonusPct}% Lv.{ta.level}
+                                    {categoryEmojis[ta.category]} +{ta.bonusPct}% L{ta.level}
                                   </span>
                                 ))}
                             </div>
@@ -284,7 +284,7 @@ export default function NotificationsPage() {
                         <div className="flex flex-wrap gap-1">
                           {n.listing!.listingArtifacts.filter((la) => la.role === "OFFERING").map((la) => (
                             <span key={la.artifact.id} className="inline-flex items-center gap-0.5 rounded-full border border-[var(--green)]/20 bg-[var(--green-bg)] px-1.5 py-0.5 text-[10px] text-[var(--green)]">
-                              {categoryEmojis[la.artifact.category]} +{la.artifact.bonusPct}% Lv.{la.artifact.level}
+                              {categoryEmojis[la.artifact.category]} +{la.artifact.bonusPct}% L{la.artifact.level}
                             </span>
                           ))}
                         </div>

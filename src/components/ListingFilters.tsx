@@ -20,10 +20,10 @@ const bonusOptions = [
 ];
 const levelOptions = [
   { value: "", label: "Any Level" },
-  { value: "5", label: "Lv.5+" },
-  { value: "8", label: "Lv.8+" },
-  { value: "10", label: "Lv.10+" },
-  { value: "12", label: "Lv.12" },
+  { value: "5", label: "L5+" },
+  { value: "8", label: "L8+" },
+  { value: "10", label: "L10+" },
+  { value: "12", label: "L12" },
 ];
 
 export default function ListingFilters() {

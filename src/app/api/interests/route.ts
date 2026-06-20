@@ -157,11 +157,11 @@ export async function POST(req: NextRequest) {
   if (listingData) {
     const interestedItems = (offeringArtifactIds as string[] || []).map((id: string) => {
       const la = listingData.listingArtifacts.find((a) => a.artifactId === id);
-      return la ? `${la.artifact.category} +${la.artifact.bonusPct}% Lv.${la.artifact.level}` : id;
+      return la ? `${la.artifact.category} +${la.artifact.bonusPct}% L${la.artifact.level}` : id;
     });
     const offeringItems = (wantingArtifactIds as string[] || []).map((id: string) => {
       const la = listingData.listingArtifacts.find((a) => a.artifactId === id);
-      return la ? `${la.artifact.category} +${la.artifact.bonusPct}% Lv.${la.artifact.level}` : id;
+      return la ? `${la.artifact.category} +${la.artifact.bonusPct}% L${la.artifact.level}` : id;
     });
 
     const parts: string[] = [];
