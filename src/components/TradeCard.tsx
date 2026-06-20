@@ -57,6 +57,22 @@ export default function TradeCard({ trade, currentPlayerId }: TradeCardProps) {
   );
 
   const status = statusConfig[trade.status];
+
+  // Group duplicate artifacts
+  const groupArts = (artifacts: TradeArtifact[]) => {
+    const map = new Map<string, { category: string; bonusPct: number; level: number; count: number }>();
+    for (const a of artifacts) {
+      const key = `${a.category}-${a.bonusPct}-${a.level}`;
+      const existing = map.get(key);
+      if (existing) {
+        existing.count++;
+      } else {
+        map.set(key, { category: a.category, bonusPct: a.bonusPct, level: a.level, count: 1 });
+      }
+    }
+    return Array.from(map.values());
+  };
+
   const canConfirm =
     (isLister && (trade.status === "PENDING" || trade.status === "TRADER_CONFIRMED")) ||
     (!isLister && (trade.status === "PENDING" || trade.status === "LISTER_CONFIRMED"));
@@ -117,9 +133,9 @@ export default function TradeCard({ trade, currentPlayerId }: TradeCardProps) {
         <div>
           <p className="text-xs font-semibold text-[var(--amber)] mb-1">You give:</p>
           <div className="flex flex-wrap gap-1">
-            {myArtifacts.map((ta) => (
-              <span key={ta.id} className="inline-flex items-center gap-1 rounded-full border border-[var(--amber)]/30 bg-[var(--amber-bg)] px-2 py-0.5 text-xs text-[var(--amber)]">
-                {categoryEmojis[ta.category]} {ta.category} +{ta.bonusPct}% L{ta.level}
+            {groupArts(myArtifacts).map((a) => (
+              <span key={`${a.category}-${a.bonusPct}-${a.level}`} className="inline-flex items-center gap-1 rounded-full border border-[var(--amber)]/30 bg-[var(--amber-bg)] px-2 py-0.5 text-xs text-[var(--amber)]">
+                {a.count > 1 && <span className="opacity-70">{a.count}x</span>}{categoryEmojis[a.category]} {a.category} +{a.bonusPct}% L{a.level}
               </span>
             ))}
             {myArtifacts.length === 0 && <span className="text-xs text-[var(--text-dim)]">Nothing</span>}
@@ -128,9 +144,9 @@ export default function TradeCard({ trade, currentPlayerId }: TradeCardProps) {
         <div>
           <p className="text-xs font-semibold text-[var(--green)] mb-1">You receive:</p>
           <div className="flex flex-wrap gap-1">
-            {theirArtifacts.map((ta) => (
-              <span key={ta.id} className="inline-flex items-center gap-1 rounded-full border border-[var(--green)]/30 bg-[var(--green-bg)] px-2 py-0.5 text-xs text-[var(--green)]">
-                {categoryEmojis[ta.category]} {ta.category} +{ta.bonusPct}% L{ta.level}
+            {groupArts(theirArtifacts).map((a) => (
+              <span key={`${a.category}-${a.bonusPct}-${a.level}`} className="inline-flex items-center gap-1 rounded-full border border-[var(--green)]/30 bg-[var(--green-bg)] px-2 py-0.5 text-xs text-[var(--green)]">
+                {a.count > 1 && <span className="opacity-70">{a.count}x</span>}{categoryEmojis[a.category]} {a.category} +{a.bonusPct}% L{a.level}
               </span>
             ))}
             {theirArtifacts.length === 0 && <span className="text-xs text-[var(--text-dim)]">Nothing</span>}

@@ -77,9 +77,23 @@ function PriceBadge({ priceType, donationAmount }: { priceType: string; donation
   );
 }
 
+function groupArtifacts(artifacts: ListingArtifact[]) {
+  const map = new Map<string, { artifact: ListingArtifact["artifact"]; count: number }>();
+  for (const la of artifacts) {
+    const key = `${la.artifact.category}-${la.artifact.bonusPct}-${la.artifact.level}`;
+    const existing = map.get(key);
+    if (existing) {
+      existing.count++;
+    } else {
+      map.set(key, { artifact: la.artifact, count: 1 });
+    }
+  }
+  return Array.from(map.values());
+}
+
 export default function ListingCard({ listing }: { listing: Listing }) {
-  const offering = listing.listingArtifacts.filter((la) => la.role === "OFFERING");
-  const wanting = listing.listingArtifacts.filter((la) => la.role === "WANTING");
+  const offering = groupArtifacts(listing.listingArtifacts.filter((la) => la.role === "OFFERING"));
+  const wanting = groupArtifacts(listing.listingArtifacts.filter((la) => la.role === "WANTING"));
   const { cleanDescription, wantedPrefs } = parseListingDescription(listing.description);
   const isArchived = listing.status === "ARCHIVED";
   const isTrade = listing.priceType === "TRADE";
@@ -115,8 +129,8 @@ export default function ListingCard({ listing }: { listing: Listing }) {
           <div className="mt-3">
             <p className="text-xs font-medium uppercase tracking-wider text-[var(--green)] mb-1.5">Offering</p>
             <div className="flex flex-wrap gap-1.5">
-              {offering.map((la) => (
-                <ArtifactBadge key={la.artifact.id} category={la.artifact.category as any} bonusPct={la.artifact.bonusPct} level={la.artifact.level} compact />
+              {offering.map((o) => (
+                <ArtifactBadge key={`${o.artifact.category}-${o.artifact.bonusPct}-${o.artifact.level}`} category={o.artifact.category as any} bonusPct={o.artifact.bonusPct} level={o.artifact.level} compact count={o.count} />
               ))}
             </div>
           </div>
@@ -126,8 +140,8 @@ export default function ListingCard({ listing }: { listing: Listing }) {
           <div className="mt-2">
             <p className="text-xs font-medium uppercase tracking-wider text-[var(--amber)] mb-1.5">Wanting</p>
             <div className="flex flex-wrap gap-1.5">
-              {wanting.map((la) => (
-                <ArtifactBadge key={la.artifact.id} category={la.artifact.category as any} bonusPct={la.artifact.bonusPct} level={la.artifact.level} compact />
+              {wanting.map((w) => (
+                <ArtifactBadge key={`${w.artifact.category}-${w.artifact.bonusPct}-${w.artifact.level}`} category={w.artifact.category as any} bonusPct={w.artifact.bonusPct} level={w.artifact.level} compact count={w.count} />
               ))}
             </div>
           </div>

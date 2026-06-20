@@ -6,9 +6,10 @@ interface ArtifactBadgeProps {
   bonusPct: number;
   level: number;
   compact?: boolean;
+  count?: number;
 }
 
-export default function ArtifactBadge({ category, bonusPct, level, compact }: ArtifactBadgeProps) {
+export default function ArtifactBadge({ category, bonusPct, level, compact, count }: ArtifactBadgeProps) {
   const style = categoryStyles[category];
   const inlineStyle = {
     backgroundColor: style.bg,
@@ -22,7 +23,7 @@ export default function ArtifactBadge({ category, bonusPct, level, compact }: Ar
         className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium"
         style={inlineStyle}
       >
-        {categoryEmojis[category]} {category} L{level} +{bonusPct}%
+        {count && count > 1 && <span className="opacity-70 mr-0.5">{count}x</span>}{categoryEmojis[category]} {category} L{level} +{bonusPct}%
       </span>
     );
   }

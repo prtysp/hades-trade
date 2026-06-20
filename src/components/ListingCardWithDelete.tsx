@@ -57,14 +57,28 @@ function parseListingDescription(description: string | null): { cleanDescription
   }
 }
 
+function groupArtifacts(artifacts: ListingArtifact[]) {
+  const map = new Map<string, { artifact: ListingArtifact["artifact"]; count: number }>();
+  for (const la of artifacts) {
+    const key = `${la.artifact.category}-${la.artifact.bonusPct}-${la.artifact.level}`;
+    const existing = map.get(key);
+    if (existing) {
+      existing.count++;
+    } else {
+      map.set(key, { artifact: la.artifact, count: 1 });
+    }
+  }
+  return Array.from(map.values());
+}
+
 interface Props {
   listing: Listing;
   isOwnProfile: boolean;
 }
 
 export default function ListingCardWithDelete({ listing, isOwnProfile }: Props) {
-  const off = listing.listingArtifacts.filter((la) => la.role === "OFFERING");
-  const want = listing.listingArtifacts.filter((la) => la.role === "WANTING");
+  const off = groupArtifacts(listing.listingArtifacts.filter((la) => la.role === "OFFERING"));
+  const want = groupArtifacts(listing.listingArtifacts.filter((la) => la.role === "WANTING"));
   const { cleanDescription, wantedPrefs } = parseListingDescription(listing.description);
 
   return (
@@ -97,7 +111,7 @@ export default function ListingCardWithDelete({ listing, isOwnProfile }: Props) 
           <div className="mt-2">
             <p className="text-xs font-medium uppercase tracking-wider text-[var(--green)] mb-1">Offering</p>
             <div className="flex flex-wrap gap-1">
-              {off.map((la) => <ArtifactBadge key={la.artifact.id} category={la.artifact.category as any} bonusPct={la.artifact.bonusPct} level={la.artifact.level} compact />)}
+              {off.map((o) => <ArtifactBadge key={`${o.artifact.category}-${o.artifact.bonusPct}-${o.artifact.level}`} category={o.artifact.category as any} bonusPct={o.artifact.bonusPct} level={o.artifact.level} compact count={o.count} />)}
             </div>
           </div>
         )}
@@ -105,7 +119,7 @@ export default function ListingCardWithDelete({ listing, isOwnProfile }: Props) 
           <div className="mt-2">
             <p className="text-xs font-medium uppercase tracking-wider text-[var(--amber)] mb-1">Wanting</p>
             <div className="flex flex-wrap gap-1">
-              {want.map((la) => <ArtifactBadge key={la.artifact.id} category={la.artifact.category as any} bonusPct={la.artifact.bonusPct} level={la.artifact.level} compact />)}
+              {want.map((w) => <ArtifactBadge key={`${w.artifact.category}-${w.artifact.bonusPct}-${w.artifact.level}`} category={w.artifact.category as any} bonusPct={w.artifact.bonusPct} level={w.artifact.level} compact count={w.count} />)}
             </div>
           </div>
         )}

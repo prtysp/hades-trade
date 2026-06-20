@@ -56,9 +56,23 @@ export default async function ListingPage({
   });
 
   if (!listing) notFound();
+  const safeListing = listing;
 
-  const offering = listing.listingArtifacts.filter((la) => la.role === "OFFERING");
-  const wanting = listing.listingArtifacts.filter((la) => la.role === "WANTING");
+  function groupArt(artifacts: typeof safeListing.listingArtifacts) {
+    const map = new Map<string, { artifact: (typeof artifacts)[0]["artifact"]; count: number }>();
+    for (const la of artifacts) {
+      const key = `${la.artifact.category}-${la.artifact.bonusPct}-${la.artifact.level}`;
+      const existing = map.get(key);
+      if (existing) {
+        existing.count++;
+      } else {
+        map.set(key, { artifact: la.artifact, count: 1 });
+      }
+    }
+    return Array.from(map.values());
+  }
+  const offering = groupArt(listing.listingArtifacts.filter((la) => la.role === "OFFERING"));
+  const wanting = groupArt(listing.listingArtifacts.filter((la) => la.role === "WANTING"));
   const { cleanDescription, wantedPrefs } = parseListingDescription(listing.description);
   const isArchived = listing.status === "ARCHIVED";
   const isOwnListing = currentPlayer?.id === listing.playerId;
@@ -100,7 +114,7 @@ export default async function ListingPage({
             <span className="text-xs font-medium text-[var(--text-dim)]">
               {isArchived ? `Archived ${listing.archivedAt ? new Date(listing.archivedAt).toLocaleDateString() : ""}` : `Expires in ${timeUntilExpiry(listing.expiresAt)}`}
             </span>
-            <ShareButton listingId={listing.id} discordUsername={listing.player.discordUsername} />
+            <ShareButton listingId={listing.id} description={cleanDescription} priceType={listing.priceType} listingArtifacts={listing.listingArtifacts} />
           </div>
         </div>
 
@@ -120,8 +134,8 @@ export default async function ListingPage({
         <div className="mt-6">
           <h2 className="text-lg font-semibold text-[var(--green)] mb-3">Offering</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
-            {offering.map((la) => (
-              <ArtifactBadge key={la.artifact.id} category={la.artifact.category} bonusPct={la.artifact.bonusPct} level={la.artifact.level} />
+            {offering.map((o) => (
+              <ArtifactBadge key={`${o.artifact.category}-${o.artifact.bonusPct}-${o.artifact.level}`} category={o.artifact.category} bonusPct={o.artifact.bonusPct} level={o.artifact.level} count={o.count} />
             ))}
           </div>
         </div>
@@ -131,8 +145,8 @@ export default async function ListingPage({
         <div className="mt-6">
           <h2 className="text-lg font-semibold text-[var(--amber)] mb-3">Wanting</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
-            {wanting.map((la) => (
-              <ArtifactBadge key={la.artifact.id} category={la.artifact.category} bonusPct={la.artifact.bonusPct} level={la.artifact.level} />
+            {wanting.map((w) => (
+              <ArtifactBadge key={`${w.artifact.category}-${w.artifact.bonusPct}-${w.artifact.level}`} category={w.artifact.category} bonusPct={w.artifact.bonusPct} level={w.artifact.level} count={w.count} />
             ))}
           </div>
         </div>
