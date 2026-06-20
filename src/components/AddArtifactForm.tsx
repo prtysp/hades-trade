@@ -2,12 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { ArtifactCategory } from "@prisma/client";
+import { categoryStyles, categoryEmojis } from "@/lib/artifact-styles";
 import { useArtifactContext } from "@/components/ArtifactContext";
-
-const categoryEmojis: Record<ArtifactCategory, string> = {
-  COMBAT: "🔴", TRANSPORT: "🟠", MINING: "🟡", DRONE: "🟢", WEAPON: "🔵", SHIELD: "🟣",
-};
-
 const categories: ArtifactCategory[] = ["COMBAT", "TRANSPORT", "MINING", "DRONE", "WEAPON", "SHIELD"];
 const LEVELS = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 const LEVEL_ROWS = [[3, 4, 5, 6, 7], [8, 9, 10, 11, 12]];

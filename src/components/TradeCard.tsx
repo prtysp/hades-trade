@@ -4,10 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { notifyRefresh } from "@/components/NotificationProvider";
-
-const categoryEmojis: Record<string, string> = {
-  COMBAT: "🔴", TRANSPORT: "🟠", MINING: "🟡", DRONE: "🟢", WEAPON: "🔵", SHIELD: "🟣",
-};
+import { categoryEmojis } from "@/lib/artifact-styles";
 
 interface TradeArtifact {
   id: string;

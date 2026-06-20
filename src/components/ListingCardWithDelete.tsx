@@ -3,19 +3,7 @@
 import Link from "next/link";
 import ArtifactBadge from "./ArtifactBadge";
 import DeleteButton from "./DeleteButton";
-
-const categoryEmojis: Record<string, string> = {
-  COMBAT: "🔴", TRANSPORT: "🟠", MINING: "🟡", DRONE: "🟢", WEAPON: "🔵", SHIELD: "🟣",
-};
-
-const categoryStyles: Record<string, { bg: string; text: string; border: string }> = {
-  COMBAT:   { bg: "rgba(184,186,38,0.15)",  text: "#b8bb26", border: "rgba(184,186,38,0.3)" },
-  TRANSPORT:{ bg: "rgba(250,189,47,0.15)",  text: "#fabd2f", border: "rgba(250,189,47,0.3)" },
-  MINING:   { bg: "rgba(177,98,134,0.15)", text: "#b76286", border: "rgba(177,98,134,0.3)" },
-  DRONE:    { bg: "rgba(142,192,124,0.15)", text: "#8ec07c", border: "rgba(142,192,124,0.3)" },
-  WEAPON:   { bg: "rgba(251,73,52,0.15)",   text: "#fb4934", border: "rgba(251,73,52,0.35)" },
-  SHIELD:   { bg: "rgba(131,165,156,0.15)", text: "#83a598", border: "rgba(131,165,156,0.3)" },
-};
+import { categoryStyles, categoryEmojis } from "@/lib/artifact-styles";
 
 function WantedPrefBadge({ category, minBonusPct, minLevel }: { category: string; minBonusPct: number; minLevel: number }) {
   const style = categoryStyles[category as keyof typeof categoryStyles] || categoryStyles.COMBAT;

@@ -3,15 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { notifyRefresh } from "@/components/NotificationProvider";
-
-const categoryEmojis: Record<string, string> = {
-  COMBAT: "🔴",
-  TRANSPORT: "🟠",
-  MINING: "🟡",
-  DRONE: "🟢",
-  WEAPON: "🔵",
-  SHIELD: "🟣",
-};
+import { categoryEmojis } from "@/lib/artifact-styles";
 
 interface InterestArtifact {
   id: string;

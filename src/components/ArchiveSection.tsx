@@ -2,10 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-
-const categoryEmojis: Record<string, string> = {
-  COMBAT: "🔴", TRANSPORT: "🟠", MINING: "🟡", DRONE: "🟢", WEAPON: "🔵", SHIELD: "🟣",
-};
+import { categoryEmojis } from "@/lib/artifact-styles";
 
 const archiveReasonLabels: Record<string, { label: string; color: string; bg: string }> = {
   TRADED:   { label: "Traded",   color: "text-[var(--green)]",  bg: "bg-[var(--green-bg)]" },

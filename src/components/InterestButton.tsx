@@ -3,17 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArtifactCategory } from "@prisma/client";
+import { categoryStyles, categoryEmojis } from "@/lib/artifact-styles";
 import { notifyRefresh } from "@/components/NotificationProvider";
-
-const categoryEmojis: Record<ArtifactCategory, string> = {
-  COMBAT: "🔴",
-  TRANSPORT: "🟠",
-  MINING: "🟡",
-  DRONE: "🟢",
-  WEAPON: "🔵",
-  SHIELD: "🟣",
-};
-
 interface ListingArtifact {
   artifact: { id: string; category: string; bonusPct: number; level: number };
   role: string;

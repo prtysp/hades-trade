@@ -2,12 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { ArtifactCategory } from "@prisma/client";
+import { categoryStyles, categoryEmojis } from "@/lib/artifact-styles";
 import { useArtifactContext, type ArtifactItem } from "@/components/ArtifactContext";
-
-const categoryEmojis: Record<ArtifactCategory, string> = {
-  COMBAT: "🔴", TRANSPORT: "🟠", MINING: "🟡", DRONE: "🟢", WEAPON: "🔵", SHIELD: "🟣",
-};
-
 const allCategories: ArtifactCategory[] = ["COMBAT", "TRANSPORT", "MINING", "DRONE", "WEAPON", "SHIELD"];
 
 interface PreferenceThreshold {

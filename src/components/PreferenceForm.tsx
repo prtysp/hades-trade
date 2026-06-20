@@ -3,15 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArtifactCategory } from "@prisma/client";
+import { categoryStyles, categoryEmojis } from "@/lib/artifact-styles";
 
 const ALL_CATEGORIES: ArtifactCategory[] = [
   "COMBAT", "TRANSPORT", "MINING", "DRONE", "WEAPON", "SHIELD",
 ];
-
-const categoryEmojis: Record<ArtifactCategory, string> = {
-  COMBAT: "🔴", TRANSPORT: "🟠", MINING: "🟡", DRONE: "🟢", WEAPON: "🔵", SHIELD: "🟣",
-};
-
 interface Threshold {
   category: string;
   minBonusPct: number;
