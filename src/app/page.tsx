@@ -9,8 +9,8 @@ export default async function HomePage({
   searchParams,
 }: {
   searchParams: Promise<{
-    type?: string;
-    category?: string;
+    types?: string;
+    categories?: string;
     minBonus?: string;
     minLevel?: string;
   }>;
@@ -22,9 +22,10 @@ export default async function HomePage({
   // Build filter
   const where: any = { status: "ACTIVE" };
 
-  // Filter by listing type
-  if (params.type && ["FREE", "DONATION", "TRADE"].includes(params.type)) {
-    where.priceType = params.type;
+  // Filter by listing types (multi-select)
+  const types = params.types ? params.types.split(",").filter(Boolean) : [];
+  if (types.length > 0) {
+    where.priceType = { in: types };
   }
 
   const listings = await prisma.listing.findMany({
@@ -36,13 +37,14 @@ export default async function HomePage({
     orderBy: { createdAt: "desc" },
   });
 
-  // Post-filter by category and bonus/level (since these are on related artifacts)
+  // Post-filter by categories (multi-select) and bonus/level (since these are on related artifacts)
   let filtered = listings;
 
-  if (params.category && params.category !== "ALL") {
+  const categories = params.categories ? params.categories.split(",").filter(Boolean) : [];
+  if (categories.length > 0) {
     filtered = filtered.filter((l) =>
       l.listingArtifacts.some(
-        (la) => la.role === "OFFERING" && la.artifact.category === params.category
+        (la) => la.role === "OFFERING" && categories.includes(la.artifact.category)
       )
     );
   }
