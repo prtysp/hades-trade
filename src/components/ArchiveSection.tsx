@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 
 const categoryEmojis: Record<string, string> = {
-  COMBAT: "⚔️", TRANSPORT: "🚀", MINING: "⛏️", DRONE: "🤖", WEAPON: "🔫", SHIELD: "🛡️",
+  COMBAT: "🔴", TRANSPORT: "🟠", MINING: "🟡", DRONE: "🟢", WEAPON: "🔵", SHIELD: "🟣",
 };
 
 const archiveReasonLabels: Record<string, { label: string; color: string; bg: string }> = {

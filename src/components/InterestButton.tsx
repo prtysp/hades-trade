@@ -6,12 +6,12 @@ import { ArtifactCategory } from "@prisma/client";
 import { notifyRefresh } from "@/components/NotificationProvider";
 
 const categoryEmojis: Record<ArtifactCategory, string> = {
-  COMBAT: "⚔️",
-  TRANSPORT: "🚀",
-  MINING: "⛏️",
-  DRONE: "🤖",
-  WEAPON: "🔫",
-  SHIELD: "🛡️",
+  COMBAT: "🔴",
+  TRANSPORT: "🟠",
+  MINING: "🟡",
+  DRONE: "🟢",
+  WEAPON: "🔵",
+  SHIELD: "🟣",
 };
 
 interface ListingArtifact {

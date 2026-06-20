@@ -5,7 +5,7 @@ import { ArtifactCategory } from "@prisma/client";
 import { useArtifactContext } from "@/components/ArtifactContext";
 
 const categoryEmojis: Record<ArtifactCategory, string> = {
-  COMBAT: "⚔️", TRANSPORT: "🚀", MINING: "⛏️", DRONE: "🤖", WEAPON: "🔫", SHIELD: "🛡️",
+  COMBAT: "🔴", TRANSPORT: "🟠", MINING: "🟡", DRONE: "🟢", WEAPON: "🔵", SHIELD: "🟣",
 };
 
 const categories: ArtifactCategory[] = ["COMBAT", "TRANSPORT", "MINING", "DRONE", "WEAPON", "SHIELD"];

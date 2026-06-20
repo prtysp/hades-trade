@@ -9,7 +9,7 @@ const ALL_CATEGORIES: ArtifactCategory[] = [
 ];
 
 const categoryEmojis: Record<ArtifactCategory, string> = {
-  COMBAT: "⚔️", TRANSPORT: "🚀", MINING: "⛏️", DRONE: "🤖", WEAPON: "🔫", SHIELD: "🛡️",
+  COMBAT: "🔴", TRANSPORT: "🟠", MINING: "🟡", DRONE: "🟢", WEAPON: "🔵", SHIELD: "🟣",
 };
 
 interface Threshold {

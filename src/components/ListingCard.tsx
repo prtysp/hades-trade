@@ -2,8 +2,29 @@ import Link from "next/link";
 import ArtifactBadge from "./ArtifactBadge";
 
 const categoryEmojis: Record<string, string> = {
-  COMBAT: "⚔️", TRANSPORT: "🚀", MINING: "⛏️", DRONE: "🤖", WEAPON: "🔫", SHIELD: "🛡️",
+  COMBAT: "🔴", TRANSPORT: "🟠", MINING: "🟡", DRONE: "🟢", WEAPON: "🔵", SHIELD: "🟣",
 };
+
+const categoryStyles: Record<string, { bg: string; text: string; border: string }> = {
+  COMBAT:   { bg: "rgba(184,186,38,0.15)",  text: "#b8bb26", border: "rgba(184,186,38,0.3)" },
+  TRANSPORT:{ bg: "rgba(250,189,47,0.15)",  text: "#fabd2f", border: "rgba(250,189,47,0.3)" },
+  MINING:   { bg: "rgba(177,98,134,0.15)", text: "#b76286", border: "rgba(177,98,134,0.3)" },
+  DRONE:    { bg: "rgba(142,192,124,0.15)", text: "#8ec07c", border: "rgba(142,192,124,0.3)" },
+  WEAPON:   { bg: "rgba(251,73,52,0.15)",   text: "#fb4934", border: "rgba(251,73,52,0.35)" },
+  SHIELD:   { bg: "rgba(131,165,156,0.15)", text: "#83a598", border: "rgba(131,165,156,0.3)" },
+};
+
+function WantedPrefBadge({ category, minBonusPct, minLevel }: { category: string; minBonusPct: number; minLevel: number }) {
+  const style = categoryStyles[category as keyof typeof categoryStyles] || categoryStyles.COMBAT;
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium"
+      style={{ backgroundColor: style.bg, color: style.text, borderColor: style.border }}
+    >
+      {categoryEmojis[category as keyof typeof categoryEmojis] || "?"} {category} Lv.{minLevel}{minBonusPct > 0 && ` +${minBonusPct}%`}
+    </span>
+  );
+}
 
 function parseListingDescription(description: string | null): { cleanDescription: string; wantedPrefs: { category: string; minBonusPct: number; minLevel: number }[] } {
   if (!description) return { cleanDescription: "", wantedPrefs: [] };
@@ -127,13 +148,9 @@ export default function ListingCard({ listing }: { listing: Listing }) {
         {isTrade && wantedPrefs.length > 0 && (
           <div className="mt-2">
             <p className="text-xs font-medium uppercase tracking-wider text-[var(--amber)] mb-1.5">Wanted (by preference)</p>
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1.5">
               {wantedPrefs.map((wp, i) => (
-                <span key={i} className="inline-flex items-center gap-1 rounded-full border border-[var(--amber)]/30 bg-[var(--amber-bg)] px-2 py-0.5 text-[10px] text-[var(--amber)]">
-                  {categoryEmojis[wp.category] || "?"} {wp.category.charAt(0)}{wp.category.slice(1).toLowerCase()}
-                  {wp.minBonusPct > 0 && <span className="opacity-70">+{wp.minBonusPct}%+</span>}
-                  {wp.minLevel > 3 && <span className="opacity-70">Lv.{wp.minLevel}+</span>}
-                </span>
+                <WantedPrefBadge key={i} category={wp.category} minBonusPct={wp.minBonusPct} minLevel={wp.minLevel} />
               ))}
             </div>
           </div>

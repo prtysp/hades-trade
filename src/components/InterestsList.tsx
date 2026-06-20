@@ -5,12 +5,12 @@ import { useRouter } from "next/navigation";
 import { notifyRefresh } from "@/components/NotificationProvider";
 
 const categoryEmojis: Record<string, string> = {
-  COMBAT: "⚔️",
-  TRANSPORT: "🚀",
-  MINING: "⛏️",
-  DRONE: "🤖",
-  WEAPON: "🔫",
-  SHIELD: "🛡️",
+  COMBAT: "🔴",
+  TRANSPORT: "🟠",
+  MINING: "🟡",
+  DRONE: "🟢",
+  WEAPON: "🔵",
+  SHIELD: "🟣",
 };
 
 interface InterestArtifact {

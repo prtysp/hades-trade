@@ -10,7 +10,7 @@ const categoryStyles: Record<ArtifactCategory, { bg: string; text: string; borde
 };
 
 const categoryEmojis: Record<ArtifactCategory, string> = {
-  COMBAT: "⚔️", TRANSPORT: "🚀", MINING: "⛏️", DRONE: "🤖", WEAPON: "🔫", SHIELD: "🛡️",
+  COMBAT: "🔴", TRANSPORT: "🟠", MINING: "🟡", DRONE: "🟢", WEAPON: "🔵", SHIELD: "🟣",
 };
 
 interface ArtifactBadgeProps {

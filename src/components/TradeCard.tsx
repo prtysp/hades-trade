@@ -6,7 +6,7 @@ import Link from "next/link";
 import { notifyRefresh } from "@/components/NotificationProvider";
 
 const categoryEmojis: Record<string, string> = {
-  COMBAT: "⚔️", TRANSPORT: "🚀", MINING: "⛏️", DRONE: "🤖", WEAPON: "🔫", SHIELD: "🛡️",
+  COMBAT: "🔴", TRANSPORT: "🟠", MINING: "🟡", DRONE: "🟢", WEAPON: "🔵", SHIELD: "🟣",
 };
 
 interface TradeArtifact {

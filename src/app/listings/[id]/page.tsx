@@ -8,7 +8,16 @@ import InterestButton from "@/components/InterestButton";
 import InterestsList from "@/components/InterestsList";
 
 const categoryEmojis: Record<string, string> = {
-  COMBAT: "⚔️", TRANSPORT: "🚀", MINING: "⛏️", DRONE: "🤖", WEAPON: "🔫", SHIELD: "🛡️",
+  COMBAT: "🔴", TRANSPORT: "🟠", MINING: "🟡", DRONE: "🟢", WEAPON: "🔵", SHIELD: "🟣",
+};
+
+const categoryStyles: Record<string, { bg: string; text: string; border: string }> = {
+  COMBAT:   { bg: "rgba(184,186,38,0.15)",  text: "#b8bb26", border: "rgba(184,186,38,0.3)" },
+  TRANSPORT:{ bg: "rgba(250,189,47,0.15)",  text: "#fabd2f", border: "rgba(250,189,47,0.3)" },
+  MINING:   { bg: "rgba(177,98,134,0.15)", text: "#b76286", border: "rgba(177,98,134,0.3)" },
+  DRONE:    { bg: "rgba(142,192,124,0.15)", text: "#8ec07c", border: "rgba(142,192,124,0.3)" },
+  WEAPON:   { bg: "rgba(251,73,52,0.15)",   text: "#fb4934", border: "rgba(251,73,52,0.35)" },
+  SHIELD:   { bg: "rgba(131,165,156,0.15)", text: "#83a598", border: "rgba(131,165,156,0.3)" },
 };
 
 function parseListingDescription(description: string | null): { cleanDescription: string; wantedPrefs: { category: string; minBonusPct: number; minLevel: number }[] } {
@@ -142,20 +151,20 @@ export default async function ListingPage({
       {isTrade && wantedPrefs.length > 0 && (
         <div className="mt-6">
           <h2 className="text-lg font-semibold text-[var(--amber)] mb-3">Wanted (by preference)</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {wantedPrefs.map((wp, i) => (
-              <div key={i} className="rounded-lg border border-[var(--amber)]/30 bg-[var(--amber-bg)] p-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">{categoryEmojis[wp.category] || "?"}</span>
-                  <span className="text-sm font-medium text-[var(--text)]">{wp.category.charAt(0)}{wp.category.slice(1).toLowerCase()}</span>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+            {wantedPrefs.map((wp, i) => {
+              const style = (categoryStyles as any)[wp.category] || categoryStyles.COMBAT;
+              return (
+                <div key={i} className="rounded-lg border p-3" style={{ backgroundColor: style.bg, color: style.text, borderColor: style.border }}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg">{categoryEmojis[wp.category] || "?"}</span>
+                    <span className="text-xs font-semibold opacity-70">Lv. {wp.minLevel}{wp.minBonusPct > 0 ? ` +${wp.minBonusPct}%` : ""}</span>
+                  </div>
+                  <div className="mt-1 font-medium">{wp.category}</div>
+                  <div className="text-sm opacity-80">{wp.minBonusPct > 0 ? `Min +${wp.minBonusPct}% bonus` : "Any bonus"}</div>
                 </div>
-                <div className="mt-1.5 flex gap-3 text-xs text-[var(--text-muted)]">
-                  {wp.minBonusPct > 0 && <span>Min bonus: <span className="text-[var(--text)]">{wp.minBonusPct}%+</span></span>}
-                  {wp.minLevel > 3 && <span>Min level: <span className="text-[var(--text)]">Lv.{wp.minLevel}+</span></span>}
-                  {wp.minBonusPct === 0 && wp.minLevel <= 3 && <span className="text-[var(--text-dim)]">Any bonus/level</span>}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
