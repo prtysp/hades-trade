@@ -8,6 +8,7 @@ import { categoryStyles, categoryEmojis } from "@/lib/artifact-styles";
 const ALL_CATEGORIES: ArtifactCategory[] = [
   "COMBAT", "TRANSPORT", "MINING", "DRONE", "WEAPON", "SHIELD",
 ];
+
 interface Threshold {
   category: string;
   minBonusPct: number;
@@ -17,6 +18,76 @@ interface Threshold {
 interface PreferenceFormProps {
   playerId: string;
   initial?: { categoryThresholds: Threshold[] };
+}
+
+// Reuse the same stepper components from AddArtifactForm
+function BonusStepperInput({
+  value, onChange, min, max, label, suffix,
+}: {
+  value: number; onChange: (v: number) => void; min: number; max: number;
+  label: string; suffix?: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(String(value));
+  const clamp = (v: number) => Math.round(Math.max(min, Math.min(max, v)) * 10) / 10;
+  const applyDraft = () => { const p = parseFloat(draft); if (!isNaN(p)) onChange(clamp(p)); setEditing(false); };
+  const canStep = (d: number) => value + d >= min && value + d <= max;
+
+  return (
+    <div>
+      <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">{label}</label>
+      <div className="flex items-center gap-0">
+        <button type="button" onClick={() => onChange(clamp(value - 10))} disabled={!canStep(-10)}
+          className="h-9 w-10 rounded-l-lg border border-r-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed">−10</button>
+        <button type="button" onClick={() => onChange(clamp(value - 1))} disabled={!canStep(-1)}
+          className="h-9 w-9 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] transition disabled:opacity-25 disabled:cursor-not-allowed">−1</button>
+        {editing ? (
+          <form onSubmit={(e) => { e.preventDefault(); applyDraft(); }} className="flex-1 min-w-0">
+            <input type="number" step={1} min={min} max={max} value={draft} onChange={(e) => setDraft(e.target.value)} onBlur={applyDraft}
+              className="h-9 w-full border border-[var(--accent-text)] bg-[var(--bg-input)] px-2 text-sm font-medium text-[var(--text)] text-center focus:outline-none tabular-nums" />
+          </form>
+        ) : (
+          <button type="button" onClick={() => setEditing(true)}
+            className="h-9 flex-1 min-w-0 border-y border-[var(--border)] bg-[var(--bg-card)] px-2 text-sm font-medium text-[var(--text)] text-center tabular-nums hover:border-[var(--border-hover)] transition">
+            {value}{suffix && <span className="text-[var(--text-muted)] ml-0.5">{suffix}</span>}
+          </button>
+        )}
+        <button type="button" onClick={() => onChange(clamp(value + 1))} disabled={!canStep(1)}
+          className="h-9 w-9 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] transition disabled:opacity-25 disabled:cursor-not-allowed">+1</button>
+        <button type="button" onClick={() => onChange(clamp(value + 10))} disabled={!canStep(10)}
+          className="h-9 w-10 rounded-r-lg border border-l-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed">+10</button>
+      </div>
+    </div>
+  );
+}
+
+function LevelSelector({
+  value, onChange, label,
+}: {
+  value: number; onChange: (v: number) => void; label: string;
+}) {
+  const LEVELS = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  const LEVEL_ROWS = [[3, 4, 5, 6, 7], [8, 9, 10, 11, 12]];
+  return (
+    <div>
+      <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">{label}</label>
+      <div className="space-y-1">
+        {LEVEL_ROWS.map((row, ri) => (
+          <div key={ri} className="flex gap-1">
+            {row.map((lv) => (
+              <button key={lv} type="button" onClick={() => onChange(lv)}
+                className={`h-9 flex-1 rounded-lg border text-sm font-medium transition ${
+                  value === lv
+                    ? "border-[var(--accent-text)] bg-[var(--accent-bg)] text-[var(--accent-text)]"
+                    : "border-[var(--border)] bg-[var(--bg-input)] text-[var(--text-muted)] hover:border-[var(--border-hover)] hover:text-[var(--text)]"
+                }`}
+              >{lv}</button>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default function PreferenceForm({ playerId, initial }: PreferenceFormProps) {
@@ -46,20 +117,14 @@ export default function PreferenceForm({ playerId, initial }: PreferenceFormProp
     setError(null);
     try {
       const res = await fetch("/api/preferences", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ playerId, thresholds }),
       });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error ?? "Failed to save preference");
-      }
+      if (!res.ok) { const data = await res.json(); throw new Error(data.error ?? "Failed to save preference"); }
       router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
   const activeThresholds = thresholds.filter((t) => t.minBonusPct > 0 || t.minLevel > 3);
@@ -75,108 +140,63 @@ export default function PreferenceForm({ playerId, initial }: PreferenceFormProp
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <p className="text-sm text-[var(--text-dim)]">
-        Set minimum bonus % and level for each artifact category you&apos;re interested in.
-        Leave categories empty to ignore them.
+        Set minimum bonus % and level for each artifact category you want to get notified about.
+        Only matching listings will trigger notifications.
       </p>
 
-      <div className="space-y-3">
-        {ALL_CATEGORIES.map((cat) => {
-          const t = getThreshold(cat);
-          const isActive = thresholds.some((th) => th.category === cat);
-
-          return (
-            <div
-              key={cat}
-              className={`rounded-lg border p-4 transition ${
-                isActive
-                  ? "border-[var(--border)] bg-[var(--bg-card)]"
-                  : "border-[var(--border)]/50 bg-[var(--bg-card)]"
-              }`}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <button
-                  type="button"
-                  onClick={() => { if (isActive) removeThreshold(cat); else updateThreshold(cat, "minBonusPct", 0); }}
-                  className={`flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium transition ${
-                    isActive
-                      ? "border-[var(--accent-text)] bg-[var(--accent)]/15 text-[var(--amber)]"
-                      : "border-[var(--border)] text-[var(--text-dim)] hover:border-[var(--border-hover)] hover:text-[var(--text-muted)]"
-                  }`}
-                >
-                  <input type="checkbox" checked={isActive} readOnly className="sr-only" />
-                  {categoryEmojis[cat]} {cat}
-                  {isActive && <span className="text-xs opacity-60">✓</span>}
-                </button>
-                {isActive && (
-                  <button type="button" onClick={() => removeThreshold(cat)}
-                    className="text-xs text-[var(--text-dim)] hover:text-[var(--red)] transition"
-                  >Remove</button>
-                )}
-              </div>
-
-              {isActive && (
-                <div className="grid grid-cols-2 gap-3">
-                  {/* Bonus stepper */}
-                  <div>
-                    <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Min Bonus %</label>
-                    <div className="flex items-center gap-0">
-                      <button type="button"
-                        onClick={() => updateThreshold(cat, "minBonusPct", Math.max(0, t.minBonusPct - 10))}
-                        disabled={t.minBonusPct < 10}
-                        className="h-9 w-10 rounded-l-lg border border-r-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed"
-                      >−10</button>
-                      <button type="button"
-                        onClick={() => updateThreshold(cat, "minBonusPct", Math.max(0, t.minBonusPct - 1))}
-                        disabled={t.minBonusPct < 1}
-                        className="h-9 w-8 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] transition disabled:opacity-25 disabled:cursor-not-allowed"
-                      >−1</button>
-                      <div className="h-9 flex-1 border-y border-[var(--border)] bg-[var(--bg-card)] flex items-center justify-center px-1">
-                        <span className="text-sm font-medium text-[var(--text)] tabular-nums">{t.minBonusPct}<span className="text-[var(--text-muted)] ml-0.5">%</span></span>
-                      </div>
-                      <button type="button"
-                        onClick={() => updateThreshold(cat, "minBonusPct", Math.min(500, t.minBonusPct + 1))}
-                        disabled={t.minBonusPct > 499}
-                        className="h-9 w-8 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] transition disabled:opacity-25 disabled:cursor-not-allowed"
-                      >+1</button>
-                      <button type="button"
-                        onClick={() => updateThreshold(cat, "minBonusPct", Math.min(500, t.minBonusPct + 10))}
-                        disabled={t.minBonusPct > 490}
-                        className="h-9 w-10 rounded-r-lg border border-l-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed"
-                      >+10</button>
-                    </div>
-                  </div>
-                  {/* Level grid: 2 rows of 5 */}
-                  <div>
-                    <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Min Level</label>
-                    <div className="flex gap-1">
-                      {[3, 4, 5, 6, 7].map((lv) => (
-                        <button key={lv} type="button" onClick={() => updateThreshold(cat, "minLevel", lv)}
-                          className={`h-9 flex-1 rounded-lg border text-xs font-medium transition ${
-                            t.minLevel === lv
-                              ? "border-[var(--accent-text)] bg-[var(--accent-bg)] text-[var(--accent-text)]"
-                              : "border-[var(--border)] bg-[var(--bg-input)] text-[var(--text-muted)] hover:border-[var(--border-hover)] hover:text-[var(--text)]"
-                          }`}
-                        >{lv}</button>
-                      ))}
-                    </div>
-                    <div className="flex gap-1 mt-1">
-                      {[8, 9, 10, 11, 12].map((lv) => (
-                        <button key={lv} type="button" onClick={() => updateThreshold(cat, "minLevel", lv)}
-                          className={`h-9 flex-1 rounded-lg border text-xs font-medium transition ${
-                            t.minLevel === lv
-                              ? "border-[var(--accent-text)] bg-[var(--accent-bg)] text-[var(--accent-text)]"
-                              : "border-[var(--border)] bg-[var(--bg-input)] text-[var(--text-muted)] hover:border-[var(--border-hover)] hover:text-[var(--text)]"
-                          }`}
-                        >{lv}</button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
+      {/* Category grid — same layout as AddArtifactForm */}
+      <div>
+        <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5">Categories to watch</label>
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+          {ALL_CATEGORIES.map((cat) => {
+            const isActive = thresholds.some((th) => th.category === cat);
+            return (
+              <button key={cat} type="button"
+                onClick={() => { if (isActive) removeThreshold(cat); else updateThreshold(cat, "minBonusPct", 0); }}
+                className={`flex flex-col items-center gap-0.5 rounded-lg border px-2 py-2 text-xs font-medium transition ${
+                  isActive
+                    ? "border-[var(--accent-text)] bg-[var(--accent-bg)] text-[var(--accent-text)]"
+                    : "border-[var(--border)] bg-[var(--bg-input)] text-[var(--text-muted)] hover:border-[var(--border-hover)] hover:text-[var(--text)]"
+                }`}
+              >
+                <span className="text-base">{categoryEmojis[cat]}</span>
+                <span className="leading-none">{cat.charAt(0)}{cat.slice(1).toLowerCase()}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
+
+      {/* Active preference cards — only shown for enabled categories */}
+      {thresholds.length > 0 && (
+        <div className="space-y-3">
+          <label className="block text-xs font-medium text-[var(--text-muted)]">Minimum thresholds</label>
+          {thresholds.map((t) => (
+            <div key={t.category} className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">{categoryEmojis[t.category]}</span>
+                  <span className="text-xs font-medium text-[var(--text)]">{t.category.charAt(0)}{t.category.slice(1).toLowerCase()}</span>
+                </div>
+                <button type="button" onClick={() => removeThreshold(t.category)}
+                  className="text-xs text-[var(--text-dim)] hover:text-[var(--red)] transition"
+                >Remove</button>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <BonusStepperInput
+                  label="Min Bonus %" suffix="%"
+                  value={t.minBonusPct} onChange={(v) => updateThreshold(t.category, "minBonusPct", v)}
+                  min={0} max={500}
+                />
+                <LevelSelector
+                  label="Min Level"
+                  value={t.minLevel} onChange={(v) => updateThreshold(t.category, "minLevel", v)}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="rounded-lg bg-[var(--bg-header)] border border-[var(--border)] px-4 py-3">
         <p className="text-sm text-[var(--text-muted)]">
@@ -189,9 +209,7 @@ export default function PreferenceForm({ playerId, initial }: PreferenceFormProp
 
       <button type="submit" disabled={saving}
         className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:bg-[var(--accent-hover)] disabled:opacity-50"
-      >
-        {saving ? "Saving…" : "Save Preferences"}
-      </button>
+      >{saving ? "Saving…" : "Save Preferences"}</button>
     </form>
   );
 }
