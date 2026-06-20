@@ -1,12 +1,11 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { categoryEmojis } from "@/lib/artifact-styles";
 import * as Slider from "@radix-ui/react-slider";
-import * as Checkbox from "@radix-ui/react-checkbox";
 import * as Popover from "@radix-ui/react-popover";
-import { Check, ChevronDown, X, CheckIcon } from "lucide-react";
+import { ChevronDown, X, Check } from "lucide-react";
 
 const ALL_CATEGORIES = ["COMBAT", "TRANSPORT", "MINING", "DRONE", "WEAPON", "SHIELD"] as const;
 const ALL_TYPES = [
@@ -48,7 +47,8 @@ function MultiSelectDropdown({
       <Popover.Trigger asChild>
         <button
           type="button"
-          className="w-full flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--bg-input)] px-2.5 py-1.5 text-sm text-[var(--text)] hover:border-[var(--border-hover)] transition"
+          className="w-full flex items-center justify-between rounded-lg border border-[var(--border)] px-2.5 py-1.5 text-sm text-[var(--text)] hover:border-[var(--border-hover)] transition"
+          style={{ backgroundColor: "var(--bg-input)" }}
         >
           <span className="truncate">
             <span className="text-[var(--text-muted)] mr-1">{label}:</span>
@@ -59,7 +59,8 @@ function MultiSelectDropdown({
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Content
-          className="z-50 w-56 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] shadow-lg p-1.5"
+          className="z-[9999] w-56 rounded-lg border border-[var(--border)] shadow-xl p-1.5"
+          style={{ backgroundColor: "var(--bg-card)" }}
           sideOffset={4}
           align="start"
         >
@@ -79,10 +80,15 @@ function MultiSelectDropdown({
                       : "text-[var(--text-muted)] hover:bg-[var(--bg-input)] hover:text-[var(--text)]"
                   }`}
                 >
-                  <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${
-                    isSelected ? "bg-[var(--accent)] border-[var(--accent)]" : "border-[var(--border)] bg-[var(--bg-input)]"
-                  }`}>
-                    {isSelected && <CheckIcon className="w-2.5 h-2.5 text-white" />}
+                  <div
+                    className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${
+                      isSelected
+                        ? "bg-[var(--accent)] border-[var(--accent)]"
+                        : "border-[var(--border)]"
+                    }`}
+                    style={!isSelected ? { backgroundColor: "var(--bg-input)" } : undefined}
+                  >
+                    {isSelected && <Check className="w-2.5 h-2.5 text-white" />}
                   </div>
                   {emojiMap?.[value] && <span>{emojiMap[value]}</span>}
                   <span className="truncate">{displayLabel}</span>
@@ -142,11 +148,18 @@ function SliderFilter({
         max={max}
         step={step}
       >
-        <Slider.Track className="relative grow rounded-full h-1.5 bg-[var(--border)]">
-          <Slider.Range className="absolute rounded-full h-full bg-[var(--accent)]" />
+        <Slider.Track
+          className="relative grow rounded-full h-2"
+          style={{ backgroundColor: "var(--border)" }}
+        >
+          <Slider.Range
+            className="absolute rounded-full h-full"
+            style={{ backgroundColor: "var(--accent)" }}
+          />
         </Slider.Track>
         <Slider.Thumb
-          className="block w-4 h-4 rounded-full bg-[var(--accent)] border-2 border-[var(--bg-card)] shadow-md cursor-pointer hover:brightness-110 transition focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+          className="block w-5 h-5 rounded-full border-2 shadow-lg cursor-pointer hover:brightness-110 transition focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40"
+          style={{ backgroundColor: "var(--accent)", borderColor: "var(--bg-card)" }}
           aria-label={label}
         />
       </Slider.Root>
@@ -198,22 +211,27 @@ export default function ListingFilters() {
     setMinLevel(3);
   };
 
-  const hasFilters = selectedTypes.length > 0 || selectedCategories.length > 0 || minBonus > 0 || minLevel > 3;
+  const hasFilters =
+    selectedTypes.length > 0 ||
+    selectedCategories.length > 0 ||
+    minBonus > 0 ||
+    minLevel > 3;
 
   return (
     <div className="mb-4 sm:mb-6 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 sm:p-4 space-y-3">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-[var(--text-muted)]">Filters</span>
         {hasFilters && (
-          <button type="button" onClick={clearAll}
-            className="text-xs text-[var(--text-dim)] hover:text-[var(--text)] transition flex items-center gap-1">
+          <button
+            type="button"
+            onClick={clearAll}
+            className="text-xs text-[var(--text-dim)] hover:text-[var(--text)] transition flex items-center gap-1"
+          >
             <X className="w-3 h-3" /> Clear
           </button>
         )}
       </div>
 
-      {/* Dropdowns row */}
       <div className="grid grid-cols-2 gap-2">
         <MultiSelectDropdown
           label="Type"
@@ -230,7 +248,6 @@ export default function ListingFilters() {
         />
       </div>
 
-      {/* Sliders row */}
       <div className="grid grid-cols-2 gap-3">
         <SliderFilter
           label="Min Bonus"
