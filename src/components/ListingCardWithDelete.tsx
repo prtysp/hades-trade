@@ -41,14 +41,14 @@ export default function ListingCardWithDelete({ listing, isOwnProfile }: Props) 
   return (
     <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 sm:p-5 transition hover:border-[var(--border-hover)] relative group">
       {isOwnProfile && (
-        <div className="absolute top-2 right-2 z-10">
+        <div className="absolute top-2.5 right-2.5 z-10">
           <DeleteButton
             onDelete={async () => {
               await fetch(`/api/listings/${listing.id}`, { method: "DELETE" });
               window.location.reload();
             }}
             confirmMessage="Delete this listing?"
-            className="opacity-0 group-hover:opacity-100 transition-opacity"
+            className="opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
           />
         </div>
       )}

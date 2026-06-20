@@ -3,8 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
-import { useNotifications } from "@/components/NotificationProvider";
-import { notifyRefresh } from "@/components/NotificationProvider";
+import { useNotifications, notifyRefresh } from "@/components/NotificationProvider";
 
 const categoryEmojis: Record<string, string> = {
   COMBAT: "⚔️", TRANSPORT: "🚀", MINING: "⛏️", DRONE: "🤖", WEAPON: "🔫", SHIELD: "🛡️",
@@ -32,7 +31,7 @@ interface Notification {
     id: string;
     player: { id: string; username: string };
     listingArtifacts: {
-      artifact: { category: string; bonusPct: number; level: number };
+      artifact: { category: string; bonusPct: number; level: number; id: string };
       role: string;
     }[];
   } | null;
@@ -49,10 +48,9 @@ interface Notification {
   } | null;
 }
 
-const actionableTypes = new Set([
-  "INTEREST_ACCEPTED",
-  "TRADE_CONFIRMATION_NEEDED",
-]);
+// Which notification types get quick-action buttons
+const expressInterestTypes = new Set(["GENERAL", "INTEREST_EXPRESSED"]); // listing notifications
+const tradeActionTypes = new Set(["INTEREST_ACCEPTED", "TRADE_CONFIRMATION_NEEDED"]);
 
 export default function NotificationsPage() {
   const { player: authPlayer, loading: authLoading } = useAuth();
@@ -64,38 +62,24 @@ export default function NotificationsPage() {
   const playerId = authPlayer?.id ?? null;
 
   const loadNotifications = useCallback(async () => {
-    if (!playerId) {
-      setLoading(false);
-      return;
-    }
+    if (!playerId) { setLoading(false); return; }
     setLoading(true);
     try {
       const res = await fetch(`/api/notifications?playerId=${playerId}`);
       const data = await res.json();
       setNotifications(data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
+    } catch (e) { console.error(e); } finally { setLoading(false); }
   }, [playerId]);
 
-  useEffect(() => {
-    if (!authLoading) {
-      loadNotifications();
-    }
-  }, [authLoading, loadNotifications]);
+  useEffect(() => { if (!authLoading) loadNotifications(); }, [authLoading, loadNotifications]);
 
   useEffect(() => {
-    const handleFocus = () => {
-      if (!authLoading && playerId) {
-        loadNotifications();
-        refresh();
-      }
-    };
-    window.addEventListener("focus", handleFocus);
-    return () => window.removeEventListener("focus", handleFocus);
+    const handler = () => { if (!authLoading && playerId) { loadNotifications(); refresh(); } };
+    window.addEventListener("focus", handler);
+    return () => window.removeEventListener("focus", handler);
   }, [authLoading, playerId, loadNotifications, refresh]);
+
+  // ─── Action handlers ───
 
   const markAsRead = async (notificationId: string) => {
     await fetch("/api/notifications", {
@@ -103,9 +87,7 @@ export default function NotificationsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ notificationId }),
     });
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
-    );
+    setNotifications((prev) => prev.map((n) => n.id === notificationId ? { ...n, read: true } : n));
     refresh();
   };
 
@@ -120,6 +102,87 @@ export default function NotificationsPage() {
     refresh();
   };
 
+  // Express interest in all artifacts of a listing
+  const expressInterest = async (notificationId: string, listingId: string) => {
+    setActingId(notificationId);
+    try {
+      const notification = notifications.find((n) => n.id === notificationId);
+      if (!notification?.listing) return;
+
+      const offeringIds = notification.listing.listingArtifacts
+        .filter((la) => la.role === "OFFERING")
+        .map((la) => la.artifact.id);
+
+      if (offeringIds.length === 0) return;
+
+      const res = await fetch("/api/interests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          listingId,
+          offeringArtifactIds: offeringIds,
+          message: "Interested in all artifacts!",
+        }),
+      });
+      if (res.ok) {
+        setNotifications((prev) => prev.map((n) => n.id === notificationId ? { ...n, read: true } : n));
+        notifyRefresh();
+        setTimeout(loadNotifications, 500);
+      }
+    } catch (e) { console.error("Express interest failed:", e); }
+    finally { setActingId(null); }
+  };
+
+  // Accept an interest notification (from the lister's perspective)
+  const acceptInterest = async (notificationId: string, listingId: string) => {
+    setActingId(notificationId);
+    try {
+      // Find the interest for this listing that is PENDING
+      // We need to fetch interests for this listing first
+      const interestsRes = await fetch(`/api/interests?listingId=${listingId}`);
+      if (!interestsRes.ok) return;
+      const interests = await interestsRes.json();
+      const pending = interests.find((i: any) => i.status === "PENDING");
+      if (!pending) return;
+
+      const res = await fetch(`/api/interests/${pending.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "ACCEPTED", offeringArtifactIds: pending.offeringInterestArtifacts?.map((a: any) => a.artifactId) || [] }),
+      });
+      if (res.ok) {
+        setNotifications((prev) => prev.map((n) => n.id === notificationId ? { ...n, read: true } : n));
+        notifyRefresh();
+        setTimeout(loadNotifications, 500);
+      }
+    } catch (e) { console.error("Accept interest failed:", e); }
+    finally { setActingId(null); }
+  };
+
+  // Reject an interest notification
+  const rejectInterest = async (notificationId: string, listingId: string) => {
+    setActingId(notificationId);
+    try {
+      const interestsRes = await fetch(`/api/interests?listingId=${listingId}`);
+      if (!interestsRes.ok) return;
+      const interests = await interestsRes.json();
+      const pending = interests.find((i: any) => i.status === "PENDING");
+      if (!pending) return;
+
+      const res = await fetch(`/api/interests/${pending.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "REJECTED" }),
+      });
+      if (res.ok) {
+        setNotifications((prev) => prev.map((n) => n.id === notificationId ? { ...n, read: true } : n));
+        notifyRefresh();
+      }
+    } catch (e) { console.error("Reject interest failed:", e); }
+    finally { setActingId(null); }
+  };
+
+  // Acknowledge / confirm a trade
   const acknowledgeTrade = async (notificationId: string, tradeId: string) => {
     setActingId(notificationId);
     try {
@@ -129,37 +192,17 @@ export default function NotificationsPage() {
         body: JSON.stringify({ notificationId, tradeId }),
       });
       if (res.ok) {
-        // Mark notification as read and update trade status locally
-        setNotifications((prev) =>
-          prev.map((n) => {
-            if (n.id === notificationId) {
-              return { ...n, read: true };
-            }
-            // Also update any other notifications for the same trade
-            if (n.tradeId === tradeId && n.trade) {
-              const updatedTrade = { ...n.trade };
-              // If the trade was PENDING, it's now confirmed by this player
-              // If the other player already confirmed, it's now COMPLETED
-              return n;
-            }
-            return n;
-          })
-        );
+        setNotifications((prev) => prev.map((n) => n.id === notificationId ? { ...n, read: true } : n));
         notifyRefresh();
-        // Reload after a moment to get fresh state
-        setTimeout(() => loadNotifications(), 500);
+        setTimeout(loadNotifications, 500);
       }
-    } catch (e) {
-      console.error("Acknowledge failed:", e);
-    } finally {
-      setActingId(null);
-    }
+    } catch (e) { console.error("Acknowledge failed:", e); }
+    finally { setActingId(null); }
   };
 
-  if (authLoading) {
-    return <p className="text-[var(--text-dim)]">Loading…</p>;
-  }
+  // ─── Render ───
 
+  if (authLoading) return <p className="text-[var(--text-dim)]">Loading…</p>;
   if (!authPlayer) {
     return (
       <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-8 sm:p-12 text-center">
@@ -212,17 +255,26 @@ export default function NotificationsPage() {
       ) : (
         <div className="space-y-3">
           {notifications.map((n) => {
-            const isActionable = actionableTypes.has(n.type) && n.tradeId && n.trade && n.trade.status !== "COMPLETED" && n.trade.status !== "CANCELLED";
             const isActing = actingId === n.id;
+            const hasListing = !!n.listing;
+            const hasTrade = !!n.trade;
+            const tradeActive = hasTrade && n.trade && !["COMPLETED", "CANCELLED"].includes(n.trade.status);
+
+            // Determine available quick actions
+            const canExpressInterest = !n.read && hasListing && expressInterestTypes.has(n.type) && n.listing && n.listing.listingArtifacts.some((la) => la.role === "OFFERING");
+            const canAcceptReject = !n.read && hasListing && n.type === "INTEREST_EXPRESSED";
+            const canAcknowledge = !n.read && tradeActive && tradeActionTypes.has(n.type);
 
             return (
               <div
                 key={n.id}
-                className={`rounded-xl border p-3 sm:p-4 transition ${
+                className={`rounded-xl border p-4 transition ${
                   n.read
                     ? "border-[var(--border)] bg-[var(--bg-card)]"
-                    : isActionable
-                    ? "border-[var(--accent)]/50 bg-[var(--bg-card)]"
+                    : canAcknowledge
+                    ? "border-[var(--green)]/40 bg-[var(--bg-card)]"
+                    : canAcceptReject || canExpressInterest
+                    ? "border-[var(--accent)]/40 bg-[var(--bg-card)]"
                     : "border-[var(--accent-text)]/40 bg-[var(--bg-card)]"
                 }`}
               >
@@ -232,13 +284,13 @@ export default function NotificationsPage() {
                       {n.message}
                     </p>
 
-                    {/* Trade artifact summary for trade notifications */}
-                    {n.trade && n.trade.tradeArtifacts.length > 0 && (
+                    {/* Trade artifact summary */}
+                    {hasTrade && n.trade!.tradeArtifacts.length > 0 && (
                       <div className="mt-2 grid grid-cols-2 gap-2">
                         <div>
                           <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--amber)] mb-0.5">You give</p>
                           <div className="flex flex-wrap gap-1">
-                            {n.trade.tradeArtifacts
+                            {n.trade!.tradeArtifacts
                               .filter((ta) =>
                                 (n.trade!.listerId === authPlayer.id && ta.role === "GIVEN") ||
                                 (n.trade!.traderId === authPlayer.id && ta.role === "RECEIVED")
@@ -253,7 +305,7 @@ export default function NotificationsPage() {
                         <div>
                           <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--green)] mb-0.5">You receive</p>
                           <div className="flex flex-wrap gap-1">
-                            {n.trade.tradeArtifacts
+                            {n.trade!.tradeArtifacts
                               .filter((ta) =>
                                 (n.trade!.listerId === authPlayer.id && ta.role === "RECEIVED") ||
                                 (n.trade!.traderId === authPlayer.id && ta.role === "GIVEN")
@@ -268,62 +320,87 @@ export default function NotificationsPage() {
                       </div>
                     )}
 
+                    {/* Listing artifact summary for express interest */}
+                    {hasListing && canExpressInterest && (
+                      <div className="mt-2">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--green)] mb-0.5">Offered in listing</p>
+                        <div className="flex flex-wrap gap-1">
+                          {n.listing!.listingArtifacts
+                            .filter((la) => la.role === "OFFERING")
+                            .map((la) => (
+                              <span key={la.artifact.id} className="inline-flex items-center gap-0.5 rounded-full border border-[var(--green)]/20 bg-[var(--green-bg)] px-1.5 py-0.5 text-[10px] text-[var(--green)]">
+                                {categoryEmojis[la.artifact.category]} {la.artifact.category} +{la.artifact.bonusPct}% Lv.{la.artifact.level}
+                              </span>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+
                     <div className="mt-2 flex items-center gap-3 flex-wrap">
-                      {n.listing && (
+                      {hasListing && (
                         <>
-                          <Link
-                            href={`/listings/${n.listing.id}`}
-                            className="text-xs sm:text-sm text-[var(--amber)] hover:text-[var(--accent-text)]"
-                            onClick={(e) => e.stopPropagation()}
-                          >
+                          <Link href={`/listings/${n.listing!.id}`} className="text-xs sm:text-sm text-[var(--amber)] hover:text-[var(--accent-text)]" onClick={(e) => e.stopPropagation()}>
                             View listing →
                           </Link>
-                          <Link
-                            href={`/players/${n.listing.player.id}`}
-                            className="text-xs sm:text-sm text-[var(--text-muted)] hover:text-[var(--text)]"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            by {n.listing.player.username}
+                          <Link href={`/players/${n.listing!.player.id}`} className="text-xs sm:text-sm text-[var(--text-muted)] hover:text-[var(--text)]" onClick={(e) => e.stopPropagation()}>
+                            by {n.listing!.player.username}
                           </Link>
                         </>
                       )}
-                      {n.trade && (
-                        <Link
-                          href={`/players/${authPlayer.id}`}
-                          className="text-xs sm:text-sm text-[var(--text-muted)] hover:text-[var(--text)]"
-                          onClick={(e) => e.stopPropagation()}
-                        >
+                      {hasTrade && !hasListing && (
+                        <Link href={`/players/${authPlayer.id}`} className="text-xs sm:text-sm text-[var(--text-muted)] hover:text-[var(--text)]" onClick={(e) => e.stopPropagation()}>
                           View trades →
                         </Link>
                       )}
-                      <span className="text-xs text-[var(--text-dim)]">
-                        {new Date(n.createdAt).toLocaleString()}
-                      </span>
+                      <span className="text-xs text-[var(--text-dim)]">{new Date(n.createdAt).toLocaleString()}</span>
                     </div>
                   </div>
 
                   <div className="flex flex-col items-end gap-1.5 shrink-0">
-                    {!n.read && !isActionable && (
+                    {/* Quick action buttons */}
+                    {canExpressInterest && (
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          markAsRead(n.id);
-                        }}
-                        className="rounded-lg border border-[var(--border)] px-2 py-1 text-xs text-[var(--text-muted)] hover:border-[var(--border-hover)] hover:text-[var(--text)] transition"
+                        onClick={(e) => { e.stopPropagation(); expressInterest(n.id, n.listing!.id); }}
+                        disabled={isActing}
+                        className="rounded-lg bg-[var(--blue)] px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 transition disabled:opacity-50 whitespace-nowrap"
                       >
-                        Read
+                        {isActing ? "…" : "🤝 Express Interest"}
                       </button>
                     )}
-                    {isActionable && (
+                    {canAcceptReject && (
+                      <div className="flex gap-1.5">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); acceptInterest(n.id, n.listing!.id); }}
+                          disabled={isActing}
+                          className="rounded-lg bg-[var(--green)] px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 transition disabled:opacity-50 whitespace-nowrap"
+                        >
+                          {isActing ? "…" : "✓ Accept"}
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); rejectInterest(n.id, n.listing!.id); }}
+                          disabled={isActing}
+                          className="rounded-lg bg-[var(--red)] px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 transition disabled:opacity-50 whitespace-nowrap"
+                        >
+                          ✕ Reject
+                        </button>
+                      </div>
+                    )}
+                    {canAcknowledge && (
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          acknowledgeTrade(n.id, n.tradeId!);
-                        }}
+                        onClick={(e) => { e.stopPropagation(); acknowledgeTrade(n.id, n.tradeId!); }}
                         disabled={isActing}
-                        className="rounded-lg bg-[var(--green-bg)] px-2.5 py-1 text-xs font-semibold text-[var(--green)] hover:opacity-80 transition disabled:opacity-50"
+                        className="rounded-lg bg-[var(--green)] px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 transition disabled:opacity-50 whitespace-nowrap"
                       >
                         {isActing ? "…" : "✓ Acknowledge"}
+                      </button>
+                    )}
+                    {/* Read button for non-actionable unread notifications */}
+                    {!n.read && !canExpressInterest && !canAcceptReject && !canAcknowledge && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); markAsRead(n.id); }}
+                        className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--text-muted)] hover:border-[var(--border-hover)] hover:text-[var(--text)] transition"
+                      >
+                        Read
                       </button>
                     )}
                   </div>

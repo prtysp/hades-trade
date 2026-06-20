@@ -28,10 +28,18 @@ export default function DeleteButton({ onDelete, confirmMessage = "Delete this i
       type="button"
       onClick={handleClick}
       disabled={deleting}
-      className={`rounded-md bg-[var(--red-bg)] px-2 py-1 text-xs font-medium text-[var(--red)] hover:bg-[var(--red-bg)] transition disabled:opacity-50 ${className}`}
+      className={`h-8 w-8 rounded-lg bg-[var(--red)] text-white flex items-center justify-center shadow-lg hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
       title="Delete"
     >
-      {deleting ? "…" : "✕"}
+      {deleting ? (
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="animate-spin">
+          <path d="M7 1a6 6 0 1 1-4.24 1.76" />
+        </svg>
+      ) : (
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <path d="M2 4h10M5 4V2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2M3 4v8a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4M6 7v3M8 7v3" />
+        </svg>
+      )}
     </button>
   );
 }

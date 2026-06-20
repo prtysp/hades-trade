@@ -21,6 +21,115 @@ interface PreferenceThreshold {
   minLevel: number;
 }
 
+const DONATION_PRESETS = [1000, 10000, 50000, 100000];
+
+function DonationInput({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const currentTotal = parseInt(value) || 0;
+
+  const addPreset = (amount: number) => {
+    const newTotal = currentTotal + amount;
+    onChange(String(newTotal));
+  };
+
+  const removePreset = (amount: number) => {
+    const newTotal = Math.max(0, currentTotal - amount);
+    onChange(newTotal > 0 ? String(newTotal) : "");
+  };
+
+  const formatCredits = (n: number) => {
+    if (n >= 1000) return `${n / 1000}K`;
+    return String(n);
+  };
+
+  // Count how many of each preset fit into the current total
+  const getPresetCount = (amount: number) => {
+    if (currentTotal <= 0) return 0;
+    return Math.floor(currentTotal / amount);
+  };
+
+  return (
+    <div className="mt-2 space-y-2.5">
+      <label className="block text-xs font-medium text-[var(--text-muted)]">Suggested Donation</label>
+
+      {/* Running total */}
+      <div className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2.5">
+        <span className="text-xs text-[var(--text-muted)]">Total</span>
+        <div className="flex items-center gap-2">
+          <span className={`text-sm font-semibold tabular-nums ${currentTotal > 0 ? "text-[var(--amber)]" : "text-[var(--text-dim)]"}`}>
+            {currentTotal > 0 ? currentTotal.toLocaleString() : "0"}
+            <span className="text-[var(--text-muted)] ml-1 text-xs">credits</span>
+          </span>
+          {currentTotal > 0 && (
+            <button
+              type="button"
+              onClick={() => onChange("")}
+              className="text-xs text-[var(--text-dim)] hover:text-[var(--red)] transition"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Preset chips — additive */}
+      <div className="grid grid-cols-4 gap-1.5">
+        {DONATION_PRESETS.map((amount) => {
+          const count = getPresetCount(amount);
+          const isActive = count > 0;
+          return (
+            <div key={amount} className="relative">
+              <button
+                type="button"
+                onClick={() => addPreset(amount)}
+                className={`w-full rounded-lg border px-2 py-2.5 text-xs font-medium transition flex flex-col items-center gap-0.5 ${
+                  isActive
+                    ? "border-[var(--amber)] bg-[var(--amber-bg)] text-[var(--amber)]"
+                    : "border-[var(--border)] bg-[var(--bg-input)] text-[var(--text-muted)] hover:border-[var(--border-hover)] hover:text-[var(--text)]"
+                }`}
+              >
+                <span className="text-sm leading-none">+{formatCredits(amount)}</span>
+                {isActive && (
+                  <span className="text-[10px] leading-none opacity-70">×{count}</span>
+                )}
+              </button>
+              {isActive && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); removePreset(amount); }}
+                  className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[var(--red)] text-white text-[9px] font-bold flex items-center justify-center shadow hover:brightness-110 transition"
+                >
+                  −
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Custom input */}
+      <div className="flex items-center gap-1.5">
+        <span className="text-xs text-[var(--text-muted)] shrink-0">Custom:</span>
+        <input
+          type="number"
+          min={0}
+          step={100}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="e.g. 25000"
+          className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--bg-input)] px-3 py-1.5 text-sm text-[var(--text)] placeholder-[var(--text-dim)] focus:border-[var(--border-focus)] focus:outline-none"
+        />
+        <span className="text-xs text-[var(--text-muted)] shrink-0">credits</span>
+      </div>
+    </div>
+  );
+}
+
 export default function CreateListingForm() {
   const { artifacts, playerId } = useArtifactContext();
   const [preference, setPreference] = useState<PreferenceThreshold[]>([]);
@@ -171,12 +280,9 @@ export default function CreateListingForm() {
           ))}
         </div>
         {priceType === "DONATION" && (
-          <input
-            type="number" min={0} step={0.01}
+          <DonationInput
             value={donationAmount}
-            onChange={(e) => setDonationAmount(e.target.value)}
-            placeholder="Suggested donation (credits)"
-            className="mt-2 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-input)] px-3 py-2 text-[var(--text)] placeholder-[var(--text-dim)] focus:border-[var(--border-focus)] focus:outline-none"
+            onChange={setDonationAmount}
           />
         )}
       </div>

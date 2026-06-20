@@ -1,27 +1,111 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ArtifactCategory } from "@prisma/client";
 import { useArtifactContext } from "@/components/ArtifactContext";
 
 const categoryEmojis: Record<ArtifactCategory, string> = {
-  COMBAT: "⚔️",
-  TRANSPORT: "🚀",
-  MINING: "⛏️",
-  DRONE: "🤖",
-  WEAPON: "🔫",
-  SHIELD: "🛡️",
+  COMBAT: "⚔️", TRANSPORT: "🚀", MINING: "⛏️", DRONE: "🤖", WEAPON: "🔫", SHIELD: "🛡️",
 };
 
 const categories: ArtifactCategory[] = ["COMBAT", "TRANSPORT", "MINING", "DRONE", "WEAPON", "SHIELD"];
 const LEVELS = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+const LEVEL_ROWS = [[3, 4, 5, 6], [7, 8, 9, 10], [11, 12]];
+
+function BonusInput({
+  value,
+  onChange,
+  min,
+  max,
+  label,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  min: number;
+  max: number;
+  label: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(String(value));
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editing) inputRef.current?.select();
+  }, [editing]);
+
+  useEffect(() => {
+    setDraft(String(value));
+  }, [value]);
+
+  const clamp = (v: number) => Math.round(Math.max(min, Math.min(max, v)) * 10) / 10;
+
+  const applyDraft = () => {
+    const parsed = parseFloat(draft);
+    if (!isNaN(parsed)) onChange(clamp(parsed));
+    setEditing(false);
+  };
+
+  const steps = [
+    { label: "−10", delta: -10 },
+    { label: "−1", delta: -1 },
+    { label: "+1", delta: 1 },
+    { label: "+10", delta: 10 },
+  ];
+
+  return (
+    <div>
+      <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">{label}</label>
+      <div className="flex items-center gap-1">
+        {steps.map(({ label: sLabel, delta }) => (
+          <button
+            key={sLabel}
+            type="button"
+            onClick={() => onChange(clamp(value + delta))}
+            disabled={value + delta < min || value + delta > max}
+            className="h-9 w-11 rounded-lg border border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed"
+          >
+            {sLabel}
+          </button>
+        ))}
+        {editing ? (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              applyDraft();
+            }}
+            className="flex-1 min-w-0"
+          >
+            <input
+              ref={inputRef}
+              type="number"
+              step={1}
+              min={min}
+              max={max}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onBlur={applyDraft}
+              className="h-9 w-full rounded-lg border border-[var(--accent-text)] bg-[var(--bg-input)] px-2 text-sm font-medium text-[var(--text)] text-center focus:outline-none tabular-nums"
+            />
+          </form>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="h-9 flex-1 min-w-0 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-2 text-sm font-medium text-[var(--text)] text-center tabular-nums hover:border-[var(--border-hover)] transition"
+          >
+            {value}<span className="text-[var(--text-muted)] ml-0.5">%</span>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function StepperInput({
   value,
   onChange,
   min,
   max,
-  step = 1,
   label,
   suffix,
 }: {
@@ -29,18 +113,10 @@ function StepperInput({
   onChange: (v: number) => void;
   min: number;
   max: number;
-  step?: number;
   label: string;
   suffix?: string;
 }) {
-  const decrement = () => {
-    const next = Math.max(min, value - step);
-    onChange(Math.round(next * 10) / 10);
-  };
-  const increment = () => {
-    const next = Math.min(max, value + step);
-    onChange(Math.round(next * 10) / 10);
-  };
+  const clamp = (v: number) => Math.max(min, Math.min(max, v));
 
   return (
     <div>
@@ -48,23 +124,22 @@ function StepperInput({
       <div className="flex items-center gap-0">
         <button
           type="button"
-          onClick={decrement}
+          onClick={() => onChange(clamp(value - 1))}
           disabled={value <= min}
-          className="h-9 w-9 rounded-l-lg border border-r-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-sm font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-30 disabled:cursor-not-allowed"
+          className="h-9 w-9 rounded-l-lg border border-r-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-sm font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed"
         >
           −
         </button>
-        <div className="h-9 flex-1 min-w-0 border-y border-[var(--border)] bg-[var(--bg-input)] flex items-center justify-center">
+        <div className="h-9 flex-1 min-w-0 border-y border-[var(--border)] bg-[var(--bg-card)] flex items-center justify-center px-2">
           <span className="text-sm font-medium text-[var(--text)] tabular-nums">
-            {value}
-            {suffix && <span className="text-[var(--text-muted)] ml-0.5">{suffix}</span>}
+            {value}{suffix && <span className="text-[var(--text-muted)] ml-0.5">{suffix}</span>}
           </span>
         </div>
         <button
           type="button"
-          onClick={increment}
+          onClick={() => onChange(clamp(value + 1))}
           disabled={value >= max}
-          className="h-9 w-9 rounded-r-lg border border-l-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-sm font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-30 disabled:cursor-not-allowed"
+          className="h-9 w-9 rounded-r-lg border border-l-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-sm font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed"
         >
           +
         </button>
@@ -85,24 +160,28 @@ function LevelSelector({
   return (
     <div>
       <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">{label}</label>
-      <div className="flex flex-wrap gap-1">
-        {LEVELS.map((lv) => {
-          const selected = value === lv;
-          return (
-            <button
-              key={lv}
-              type="button"
-              onClick={() => onChange(lv)}
-              className={`h-9 w-9 rounded-lg border text-sm font-medium transition ${
-                selected
-                  ? "border-[var(--accent-text)] bg-[var(--accent-bg)] text-[var(--accent-text)]"
-                  : "border-[var(--border)] bg-[var(--bg-input)] text-[var(--text-muted)] hover:border-[var(--border-hover)] hover:text-[var(--text)]"
-              }`}
-            >
-              {lv}
-            </button>
-          );
-        })}
+      <div className="space-y-1">
+        {LEVEL_ROWS.map((row, ri) => (
+          <div key={ri} className="flex gap-1">
+            {row.map((lv) => {
+              const selected = value === lv;
+              return (
+                <button
+                  key={lv}
+                  type="button"
+                  onClick={() => onChange(lv)}
+                  className={`h-8 flex-1 rounded-lg border text-xs font-medium transition ${
+                    selected
+                      ? "border-[var(--accent-text)] bg-[var(--accent-bg)] text-[var(--accent-text)]"
+                      : "border-[var(--border)] bg-[var(--bg-input)] text-[var(--text-muted)] hover:border-[var(--border-hover)] hover:text-[var(--text)]"
+                  }`}
+                >
+                  {lv}
+                </button>
+              );
+            })}
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -216,27 +295,15 @@ export default function AddArtifactForm() {
 
         {/* Bonus %, Level, Quantity in a row */}
         <div className="grid grid-cols-3 gap-3">
-          <StepperInput
+          <BonusInput
             value={bonusPct}
             onChange={setBonusPct}
             min={0}
             max={500}
-            step={5}
             label="Bonus %"
-            suffix="%"
           />
-          <LevelSelector
-            value={level}
-            onChange={setLevel}
-            label="Level"
-          />
-          <StepperInput
-            value={quantity}
-            onChange={setQuantity}
-            min={1}
-            max={50}
-            label="Quantity"
-          />
+          <LevelSelector value={level} onChange={setLevel} label="Level" />
+          <StepperInput value={quantity} onChange={setQuantity} min={1} max={50} label="Quantity" />
         </div>
 
         {/* Preview */}
@@ -273,16 +340,22 @@ export default function AddArtifactForm() {
             {artifacts.map((art) => (
               <div
                 key={art.id}
-                className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-2 text-center relative group"
+                className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-2.5 text-center relative group"
               >
                 <button
                   type="button"
                   onClick={(e) => handleDelete(art.id, e)}
                   disabled={deleting === art.id}
-                  className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-[var(--red-bg)] text-[var(--red)] text-xs font-bold opacity-0 group-hover:opacity-100 hover:!opacity-100 transition flex items-center justify-center disabled:opacity-50"
+                  className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-[var(--red)] text-white text-xs font-bold flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 hover:!opacity-100 transition-all hover:scale-110 disabled:opacity-50 z-10"
                   title="Delete artifact"
                 >
-                  {deleting === art.id ? "…" : "×"}
+                  {deleting === art.id ? (
+                    <span className="animate-spin">⟳</span>
+                  ) : (
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                      <path d="M1.5 1.5L8.5 8.5M8.5 1.5L1.5 8.5" />
+                    </svg>
+                  )}
                 </button>
                 <div className="text-sm">{categoryEmojis[art.category]}</div>
                 <div className="text-xs font-medium text-[var(--text)]">{art.category.charAt(0)}{art.category.slice(1).toLowerCase()}</div>
