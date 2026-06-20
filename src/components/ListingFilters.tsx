@@ -3,6 +3,10 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useState, useEffect } from "react";
 import { categoryEmojis } from "@/lib/artifact-styles";
+import * as Slider from "@radix-ui/react-slider";
+import * as Checkbox from "@radix-ui/react-checkbox";
+import * as Popover from "@radix-ui/react-popover";
+import { Check, ChevronDown, X, CheckIcon } from "lucide-react";
 
 const ALL_CATEGORIES = ["COMBAT", "TRANSPORT", "MINING", "DRONE", "WEAPON", "SHIELD"] as const;
 const ALL_TYPES = [
@@ -11,11 +15,153 @@ const ALL_TYPES = [
   { value: "TRADE", label: "🔄 Trade" },
 ] as const;
 
+function MultiSelectDropdown({
+  label,
+  options,
+  selected,
+  onChange,
+  emojiMap,
+}: {
+  label: string;
+  options: readonly { value: string; label: string }[] | readonly string[];
+  selected: string[];
+  onChange: (values: string[]) => void;
+  emojiMap?: Record<string, string>;
+}) {
+  const toggle = (value: string) => {
+    if (selected.includes(value)) {
+      onChange(selected.filter((v) => v !== value));
+    } else {
+      onChange([...selected, value]);
+    }
+  };
+
+  const displayText =
+    selected.length === 0
+      ? "All"
+      : selected.length === 1
+        ? selected[0]
+        : `${selected.length} selected`;
+
+  return (
+    <Popover.Root>
+      <Popover.Trigger asChild>
+        <button
+          type="button"
+          className="w-full flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--bg-input)] px-2.5 py-1.5 text-sm text-[var(--text)] hover:border-[var(--border-hover)] transition"
+        >
+          <span className="truncate">
+            <span className="text-[var(--text-muted)] mr-1">{label}:</span>
+            {displayText}
+          </span>
+          <ChevronDown className="w-3.5 h-3.5 text-[var(--text-muted)] shrink-0 ml-1" />
+        </button>
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Content
+          className="z-50 w-56 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] shadow-lg p-1.5"
+          sideOffset={4}
+          align="start"
+        >
+          <div className="space-y-0.5 max-h-60 overflow-y-auto">
+            {options.map((opt) => {
+              const value = typeof opt === "string" ? opt : opt.value;
+              const displayLabel = typeof opt === "string" ? opt : opt.label;
+              const isSelected = selected.includes(value);
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => toggle(value)}
+                  className={`w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-xs transition ${
+                    isSelected
+                      ? "bg-[var(--accent-bg)] text-[var(--accent-text)]"
+                      : "text-[var(--text-muted)] hover:bg-[var(--bg-input)] hover:text-[var(--text)]"
+                  }`}
+                >
+                  <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${
+                    isSelected ? "bg-[var(--accent)] border-[var(--accent)]" : "border-[var(--border)] bg-[var(--bg-input)]"
+                  }`}>
+                    {isSelected && <CheckIcon className="w-2.5 h-2.5 text-white" />}
+                  </div>
+                  {emojiMap?.[value] && <span>{emojiMap[value]}</span>}
+                  <span className="truncate">{displayLabel}</span>
+                </button>
+              );
+            })}
+          </div>
+          {selected.length > 0 && (
+            <div className="pt-1.5 mt-1.5 border-t border-[var(--border)]">
+              <button
+                type="button"
+                onClick={() => onChange([])}
+                className="w-full text-center text-[10px] text-[var(--text-dim)] hover:text-[var(--text)] transition py-0.5"
+              >
+                Clear selection
+              </button>
+            </div>
+          )}
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
+  );
+}
+
+function SliderFilter({
+  label,
+  value,
+  onChange,
+  min,
+  max,
+  step,
+  formatValue,
+  formatDisplay,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  min: number;
+  max: number;
+  step: number;
+  formatValue: (v: number) => string;
+  formatDisplay: (v: number) => string;
+}) {
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <label className="text-xs font-medium text-[var(--text-muted)]">{label}</label>
+        <span className="text-xs font-medium text-[var(--text)] tabular-nums">
+          {formatDisplay(value)}
+        </span>
+      </div>
+      <Slider.Root
+        className="relative flex items-center select-none touch-none w-full h-5"
+        value={[value]}
+        onValueChange={([v]) => onChange(v)}
+        min={min}
+        max={max}
+        step={step}
+      >
+        <Slider.Track className="relative grow rounded-full h-1.5 bg-[var(--border)]">
+          <Slider.Range className="absolute rounded-full h-full bg-[var(--accent)]" />
+        </Slider.Track>
+        <Slider.Thumb
+          className="block w-4 h-4 rounded-full bg-[var(--accent)] border-2 border-[var(--bg-card)] shadow-md cursor-pointer hover:brightness-110 transition focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+          aria-label={label}
+        />
+      </Slider.Root>
+      <div className="flex justify-between text-[10px] text-[var(--text-dim)] mt-0.5">
+        <span>{formatValue(min)}</span>
+        <span>{formatValue(max)}</span>
+      </div>
+    </div>
+  );
+}
+
 export default function ListingFilters() {
   const router = useRouter();
   const params = useSearchParams();
 
-  // Parse multi-value params from URL
   const parseList = (key: string): string[] => {
     const val = params.get(key);
     if (!val) return [];
@@ -27,45 +173,23 @@ export default function ListingFilters() {
   const [minBonus, setMinBonus] = useState<number>(() => parseInt(params.get("minBonus") || "0"));
   const [minLevel, setMinLevel] = useState<number>(() => parseInt(params.get("minLevel") || "3"));
 
-  // Debounced URL update
   useEffect(() => {
     const timeout = setTimeout(() => {
       const newParams = new URLSearchParams();
-
       if (selectedTypes.length > 0 && selectedTypes.length < ALL_TYPES.length) {
         newParams.set("types", selectedTypes.join(","));
       }
       if (selectedCategories.length > 0 && selectedCategories.length < ALL_CATEGORIES.length) {
         newParams.set("categories", selectedCategories.join(","));
       }
-      if (minBonus > 0) {
-        newParams.set("minBonus", String(minBonus));
-      }
-      if (minLevel > 3) {
-        newParams.set("minLevel", String(minLevel));
-      }
-
+      if (minBonus > 0) newParams.set("minBonus", String(minBonus));
+      if (minLevel > 3) newParams.set("minLevel", String(minLevel));
       const newUrl = `/?${newParams.toString()}`;
       const currentUrl = `/?${params.toString()}`;
-      if (newUrl !== currentUrl) {
-        router.replace(newUrl, { scroll: false });
-      }
+      if (newUrl !== currentUrl) router.replace(newUrl, { scroll: false });
     }, 300);
-
     return () => clearTimeout(timeout);
   }, [selectedTypes, selectedCategories, minBonus, minLevel, params, router]);
-
-  const toggleType = (value: string) => {
-    setSelectedTypes((prev) =>
-      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
-    );
-  };
-
-  const toggleCategory = (value: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
-    );
-  };
 
   const clearAll = () => {
     setSelectedTypes([]);
@@ -78,117 +202,56 @@ export default function ListingFilters() {
 
   return (
     <div className="mb-4 sm:mb-6 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 sm:p-4 space-y-3">
-      {/* Clear button */}
-      {hasFilters && (
-        <div className="flex justify-end">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-[var(--text-muted)]">Filters</span>
+        {hasFilters && (
           <button type="button" onClick={clearAll}
-            className="text-xs text-[var(--text-dim)] hover:text-[var(--text)] transition">
-            Clear all filters
+            className="text-xs text-[var(--text-dim)] hover:text-[var(--text)] transition flex items-center gap-1">
+            <X className="w-3 h-3" /> Clear
           </button>
-        </div>
-      )}
-
-      {/* Type filter — multi-select chips */}
-      <div>
-        <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5">Trade Type</label>
-        <div className="flex flex-wrap gap-1.5">
-          {ALL_TYPES.map(({ value, label }) => {
-            const selected = selectedTypes.includes(value);
-            return (
-              <button key={value} type="button" onClick={() => toggleType(value)}
-                className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
-                  selected
-                    ? value === "FREE" ? "border-[var(--green)] bg-[var(--green-bg)] text-[var(--green)]"
-                      : value === "DONATION" ? "border-[var(--amber)] bg-[var(--amber-bg)] text-[var(--amber)]"
-                      : "border-[var(--blue)] bg-[var(--blue-bg)] text-[var(--blue)]"
-                    : "border-[var(--border)] bg-[var(--bg-input)] text-[var(--text-muted)] hover:border-[var(--border-hover)] hover:text-[var(--text)]"
-                }`}
-              >{label}</button>
-            );
-          })}
-        </div>
+        )}
       </div>
 
-      {/* Category filter — multi-select chips */}
-      <div>
-        <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5">Category</label>
-        <div className="flex flex-wrap gap-1.5">
-          {ALL_CATEGORIES.map((cat) => {
-            const selected = selectedCategories.includes(cat);
-            return (
-              <button key={cat} type="button" onClick={() => toggleCategory(cat)}
-                className={`flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition ${
-                  selected
-                    ? "border-[var(--accent-text)] bg-[var(--accent-bg)] text-[var(--accent-text)]"
-                    : "border-[var(--border)] bg-[var(--bg-input)] text-[var(--text-muted)] hover:border-[var(--border-hover)] hover:text-[var(--text)]"
-                }`}
-              >
-                <span>{categoryEmojis[cat]}</span>
-                <span>{cat.charAt(0)}{cat.slice(1).toLowerCase()}</span>
-              </button>
-            );
-          })}
-        </div>
+      {/* Dropdowns row */}
+      <div className="grid grid-cols-2 gap-2">
+        <MultiSelectDropdown
+          label="Type"
+          options={ALL_TYPES as unknown as { value: string; label: string }[]}
+          selected={selectedTypes}
+          onChange={setSelectedTypes}
+        />
+        <MultiSelectDropdown
+          label="Category"
+          options={ALL_CATEGORIES as unknown as string[]}
+          selected={selectedCategories}
+          onChange={setSelectedCategories}
+          emojiMap={categoryEmojis}
+        />
       </div>
 
-      {/* Min Bonus — range slider */}
-      <div>
-        <div className="flex items-center justify-between mb-1">
-          <label className="block text-xs font-medium text-[var(--text-muted)]">Min Bonus</label>
-          <span className="text-xs font-medium text-[var(--text)] tabular-nums">
-            {minBonus > 0 ? `${minBonus}%+` : "Any"}
-          </span>
-        </div>
-        <input
-          type="range"
+      {/* Sliders row */}
+      <div className="grid grid-cols-2 gap-3">
+        <SliderFilter
+          label="Min Bonus"
+          value={minBonus}
+          onChange={setMinBonus}
           min={0}
           max={500}
           step={10}
-          value={minBonus}
-          onChange={(e) => setMinBonus(parseInt(e.target.value))}
-          className="w-full h-2 rounded-full appearance-none cursor-pointer accent-[var(--accent)]
-            [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4
-            [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[var(--accent)]
-            [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-[var(--bg-card)]
-            [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:cursor-pointer
-            [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full
-            [&::-moz-range-thumb]:bg-[var(--accent)] [&::-moz-range-thumb]:border-2
-            [&::-moz-range-thumb]:border-[var(--bg-card)] [&::-moz-range-thumb]:cursor-pointer"
+          formatValue={(v) => `${v}%`}
+          formatDisplay={(v) => (v > 0 ? `${v}%+` : "Any")}
         />
-        <div className="flex justify-between text-[10px] text-[var(--text-dim)] mt-0.5">
-          <span>Any</span>
-          <span>500%+</span>
-        </div>
-      </div>
-
-      {/* Min Level — range slider */}
-      <div>
-        <div className="flex items-center justify-between mb-1">
-          <label className="block text-xs font-medium text-[var(--text-muted)]">Min Level</label>
-          <span className="text-xs font-medium text-[var(--text)] tabular-nums">
-            {minLevel > 3 ? `L${minLevel}+` : "Any"}
-          </span>
-        </div>
-        <input
-          type="range"
+        <SliderFilter
+          label="Min Level"
+          value={minLevel}
+          onChange={setMinLevel}
           min={3}
           max={12}
           step={1}
-          value={minLevel}
-          onChange={(e) => setMinLevel(parseInt(e.target.value))}
-          className="w-full h-2 rounded-full appearance-none cursor-pointer accent-[var(--accent)]
-            [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4
-            [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[var(--accent)]
-            [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-[var(--bg-card)]
-            [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:cursor-pointer
-            [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full
-            [&::-moz-range-thumb]:bg-[var(--accent)] [&::-moz-range-thumb]:border-2
-            [&::-moz-range-thumb]:border-[var(--bg-card)] [&::-moz-range-thumb]:cursor-pointer"
+          formatValue={(v) => `L${v}`}
+          formatDisplay={(v) => (v > 3 ? `L${v}+` : "Any")}
         />
-        <div className="flex justify-between text-[10px] text-[var(--text-dim)] mt-0.5">
-          <span>L3</span>
-          <span>L12</span>
-        </div>
       </div>
     </div>
   );
