@@ -167,34 +167,42 @@ export default function PreferenceForm({ playerId, initial }: PreferenceFormProp
                     <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">
                       Min Bonus %
                     </label>
-                    <input
-                      type="number"
-                      min={0}
-                      max={500}
-                      step={10}
-                      value={t.minBonusPct}
-                      onChange={(e) =>
-                        updateThreshold(cat, "minBonusPct", parseFloat(e.target.value) || 0)
-                      }
-                      className="w-full rounded-md border border-[var(--border)] bg-[var(--bg)] px-3 py-1.5 text-sm text-[var(--text)] focus:border-[var(--border-focus)] focus:outline-none"
-                      placeholder="e.g. 320"
-                    />
+                    <div className="flex items-center gap-0">
+                      <button
+                        type="button"
+                        onClick={() => updateThreshold(cat, "minBonusPct", Math.max(0, t.minBonusPct - 10))}
+                        className="h-8 w-8 rounded-l-lg border border-r-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-sm flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition"
+                      >−</button>
+                      <div className="h-8 flex-1 border-y border-[var(--border)] bg-[var(--bg-input)] flex items-center justify-center">
+                        <span className="text-sm font-medium text-[var(--text)]">{t.minBonusPct}<span className="text-[var(--text-muted)] ml-0.5">%</span></span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => updateThreshold(cat, "minBonusPct", Math.min(500, t.minBonusPct + 10))}
+                        className="h-8 w-8 rounded-r-lg border border-l-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-sm flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition"
+                      >+</button>
+                    </div>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">
                       Min Level
                     </label>
-                    <input
-                      type="number"
-                      min={3}
-                      max={12}
-                      value={t.minLevel}
-                      onChange={(e) =>
-                        updateThreshold(cat, "minLevel", parseInt(e.target.value) || 3)
-                      }
-                      className="w-full rounded-md border border-[var(--border)] bg-[var(--bg)] px-3 py-1.5 text-sm text-[var(--text)] focus:border-[var(--border-focus)] focus:outline-none"
-                      placeholder="e.g. 10"
-                    />
+                    <div className="flex flex-wrap gap-1">
+                      {[3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((lv) => (
+                        <button
+                          key={lv}
+                          type="button"
+                          onClick={() => updateThreshold(cat, "minLevel", lv)}
+                          className={`h-8 w-8 rounded-lg border text-xs font-medium transition ${
+                            t.minLevel === lv
+                              ? "border-[var(--accent-text)] bg-[var(--accent-bg)] text-[var(--accent-text)]"
+                              : "border-[var(--border)] bg-[var(--bg-input)] text-[var(--text-muted)] hover:border-[var(--border-hover)] hover:text-[var(--text)]"
+                          }`}
+                        >
+                          {lv}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}

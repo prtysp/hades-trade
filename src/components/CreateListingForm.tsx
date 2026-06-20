@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { ArtifactCategory } from "@prisma/client";
+import { useArtifactContext, type ArtifactItem } from "@/components/ArtifactContext";
 
 const categoryEmojis: Record<ArtifactCategory, string> = {
   COMBAT: "⚔️",
@@ -14,26 +15,14 @@ const categoryEmojis: Record<ArtifactCategory, string> = {
 
 const allCategories: ArtifactCategory[] = ["COMBAT", "TRANSPORT", "MINING", "DRONE", "WEAPON", "SHIELD"];
 
-interface Artifact {
-  id: string;
-  category: ArtifactCategory;
-  bonusPct: number;
-  level: number;
-}
-
 interface PreferenceThreshold {
   category: ArtifactCategory;
   minBonusPct: number;
   minLevel: number;
 }
 
-interface CreateListingFormProps {
-  playerId: string;
-  artifacts: Artifact[];
-}
-
-export default function CreateListingForm({ playerId, artifacts }: CreateListingFormProps) {
-  // artifacts are managed by the parent via ArtifactSync
+export default function CreateListingForm() {
+  const { artifacts, playerId } = useArtifactContext();
   const [preference, setPreference] = useState<PreferenceThreshold[]>([]);
   const [description, setDescription] = useState("");
   const [offering, setOffering] = useState<string[]>([]);

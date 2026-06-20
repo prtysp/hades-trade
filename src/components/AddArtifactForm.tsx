@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ArtifactCategory } from "@prisma/client";
+import { useArtifactContext } from "@/components/ArtifactContext";
 
 const categoryEmojis: Record<ArtifactCategory, string> = {
   COMBAT: "⚔️",
@@ -13,23 +14,105 @@ const categoryEmojis: Record<ArtifactCategory, string> = {
 };
 
 const categories: ArtifactCategory[] = ["COMBAT", "TRANSPORT", "MINING", "DRONE", "WEAPON", "SHIELD"];
+const LEVELS = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
-interface Artifact {
-  id: string;
-  category: ArtifactCategory;
-  bonusPct: number;
-  level: number;
+function StepperInput({
+  value,
+  onChange,
+  min,
+  max,
+  step = 1,
+  label,
+  suffix,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  min: number;
+  max: number;
+  step?: number;
+  label: string;
+  suffix?: string;
+}) {
+  const decrement = () => {
+    const next = Math.max(min, value - step);
+    onChange(Math.round(next * 10) / 10);
+  };
+  const increment = () => {
+    const next = Math.min(max, value + step);
+    onChange(Math.round(next * 10) / 10);
+  };
+
+  return (
+    <div>
+      <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">{label}</label>
+      <div className="flex items-center gap-0">
+        <button
+          type="button"
+          onClick={decrement}
+          disabled={value <= min}
+          className="h-9 w-9 rounded-l-lg border border-r-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-sm font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-30 disabled:cursor-not-allowed"
+        >
+          −
+        </button>
+        <div className="h-9 flex-1 min-w-0 border-y border-[var(--border)] bg-[var(--bg-input)] flex items-center justify-center">
+          <span className="text-sm font-medium text-[var(--text)] tabular-nums">
+            {value}
+            {suffix && <span className="text-[var(--text-muted)] ml-0.5">{suffix}</span>}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={increment}
+          disabled={value >= max}
+          className="h-9 w-9 rounded-r-lg border border-l-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-sm font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-30 disabled:cursor-not-allowed"
+        >
+          +
+        </button>
+      </div>
+    </div>
+  );
 }
 
-interface AddArtifactFormProps {
-  playerId: string;
-  artifacts: Artifact[];
-  onArtifactAdded: () => void;
+function LevelSelector({
+  value,
+  onChange,
+  label,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  label: string;
+}) {
+  return (
+    <div>
+      <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">{label}</label>
+      <div className="flex flex-wrap gap-1">
+        {LEVELS.map((lv) => {
+          const selected = value === lv;
+          return (
+            <button
+              key={lv}
+              type="button"
+              onClick={() => onChange(lv)}
+              className={`h-9 w-9 rounded-lg border text-sm font-medium transition ${
+                selected
+                  ? "border-[var(--accent-text)] bg-[var(--accent-bg)] text-[var(--accent-text)]"
+                  : "border-[var(--border)] bg-[var(--bg-input)] text-[var(--text-muted)] hover:border-[var(--border-hover)] hover:text-[var(--text)]"
+              }`}
+            >
+              {lv}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
-export default function AddArtifactForm({ playerId, artifacts, onArtifactAdded }: AddArtifactFormProps) {
+export default function AddArtifactForm() {
+  const { artifacts, playerId, refresh } = useArtifactContext();
+
   const [category, setCategory] = useState<ArtifactCategory>("COMBAT");
-  const [bonusPct, setBonusPct] = useState("320");
+  const [bonusPct, setBonusPct] = useState(320);
   const [level, setLevel] = useState(10);
   const [quantity, setQuantity] = useState(1);
   const [saving, setSaving] = useState(false);
@@ -48,7 +131,7 @@ export default function AddArtifactForm({ playerId, artifacts, onArtifactAdded }
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error ?? "Failed to delete");
       }
-      onArtifactAdded();
+      await refresh();
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : "Failed to delete artifact");
     } finally {
@@ -62,8 +145,7 @@ export default function AddArtifactForm({ playerId, artifacts, onArtifactAdded }
     setError(null);
     setSuccess(null);
 
-    const bonus = parseFloat(bonusPct);
-    if (isNaN(bonus) || bonus < 0) {
+    if (bonusPct < 0) {
       setError("Bonus % must be a positive number");
       setSaving(false);
       return;
@@ -80,12 +162,11 @@ export default function AddArtifactForm({ playerId, artifacts, onArtifactAdded }
     }
 
     try {
-      // Create all artifacts in parallel
       const promises = Array.from({ length: quantity }, () =>
         fetch("/api/artifacts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ category, bonusPct: bonus, level, playerId }),
+          body: JSON.stringify({ category, bonusPct, level, playerId }),
         })
       );
 
@@ -95,13 +176,9 @@ export default function AddArtifactForm({ playerId, artifacts, onArtifactAdded }
         throw new Error(`Failed to add ${failed.length} artifact(s)`);
       }
 
-      setSuccess(`✓ Added ${quantity} ${category} +${bonus}% Lv.${level} artifact${quantity > 1 ? "s" : ""}!`);
-      // Don't reset bonusPct/level — persist them for easy batch adding
-      // Only reset quantity
+      setSuccess(`✓ Added ${quantity} ${category} +${bonusPct}% Lv.${level} artifact${quantity > 1 ? "s" : ""}!`);
       setQuantity(1);
-
-      // Notify parent to refresh
-      onArtifactAdded();
+      await refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -109,93 +186,68 @@ export default function AddArtifactForm({ playerId, artifacts, onArtifactAdded }
     }
   };
 
-  // Group artifacts by category+level+bonus for the inventory display
-  const groupedArtifacts = artifacts.reduce<Record<string, { artifact: Artifact; count: number }>>((acc, art) => {
-    const key = `${art.category}-${art.level}-${art.bonusPct}`;
-    if (!acc[key]) {
-      acc[key] = { artifact: art, count: 0 };
-    }
-    acc[key].count++;
-    return acc;
-  }, {});
-
-  const sortedGroups = Object.values(groupedArtifacts).sort((a, b) => {
-    if (a.artifact.category !== b.artifact.category) {
-      return a.artifact.category.localeCompare(b.artifact.category);
-    }
-    if (a.artifact.level !== b.artifact.level) {
-      return b.artifact.level - a.artifact.level;
-    }
-    return b.artifact.bonusPct - a.artifact.bonusPct;
-  });
-
   return (
     <div className="space-y-4">
-      {/* Add form */}
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-          {/* Category */}
-          <div>
-            <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Category</label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value as ArtifactCategory)}
-              className="w-full rounded-lg border border-[var(--border)] bg-slate-800 px-2 py-2 text-[var(--text)] text-sm focus:border-[var(--border-focus)] focus:outline-none"
-            >
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {categoryEmojis[cat]} {cat}
-                </option>
-              ))}
-            </select>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Category selector */}
+        <div>
+          <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5">Category</label>
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+            {categories.map((cat) => {
+              const selected = category === cat;
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setCategory(cat)}
+                  className={`flex flex-col items-center gap-0.5 rounded-lg border px-2 py-2 text-xs font-medium transition ${
+                    selected
+                      ? "border-[var(--accent-text)] bg-[var(--accent-bg)] text-[var(--accent-text)]"
+                      : "border-[var(--border)] bg-[var(--bg-input)] text-[var(--text-muted)] hover:border-[var(--border-hover)] hover:text-[var(--text)]"
+                  }`}
+                >
+                  <span className="text-base">{categoryEmojis[cat]}</span>
+                  <span className="leading-none">{cat.charAt(0)}{cat.slice(1).toLowerCase()}</span>
+                </button>
+              );
+            })}
           </div>
+        </div>
 
-          {/* Bonus % */}
-          <div>
-            <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Bonus %</label>
-            <input
-              type="number"
-              min={0}
-              max={500}
-              step={0.1}
-              value={bonusPct}
-              onChange={(e) => setBonusPct(e.target.value)}
-              className="w-full rounded-lg border border-[var(--border)] bg-slate-800 px-2 py-2 text-[var(--text)] text-sm focus:border-[var(--border-focus)] focus:outline-none"
-            />
-          </div>
-
-          {/* Level */}
-          <div>
-            <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Level</label>
-            <input
-              type="number"
-              min={3}
-              max={12}
-              value={level}
-              onChange={(e) => setLevel(parseInt(e.target.value) || 3)}
-              className="w-full rounded-lg border border-[var(--border)] bg-slate-800 px-2 py-2 text-[var(--text)] text-sm focus:border-[var(--border-focus)] focus:outline-none"
-            />
-          </div>
-
-          {/* Quantity */}
-          <div>
-            <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Qty</label>
-            <input
-              type="number"
-              min={1}
-              max={50}
-              value={quantity}
-              onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-              className="w-full rounded-lg border border-[var(--border)] bg-slate-800 px-2 py-2 text-[var(--text)] text-sm focus:border-[var(--border-focus)] focus:outline-none"
-            />
-          </div>
+        {/* Bonus %, Level, Quantity in a row */}
+        <div className="grid grid-cols-3 gap-3">
+          <StepperInput
+            value={bonusPct}
+            onChange={setBonusPct}
+            min={0}
+            max={500}
+            step={5}
+            label="Bonus %"
+            suffix="%"
+          />
+          <LevelSelector
+            value={level}
+            onChange={setLevel}
+            label="Level"
+          />
+          <StepperInput
+            value={quantity}
+            onChange={setQuantity}
+            min={1}
+            max={50}
+            label="Quantity"
+          />
         </div>
 
         {/* Preview */}
         <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
-          <span>Adding:</span>
-          <span className="inline-flex items-center gap-1 rounded-full border border-[var(--border)] px-2 py-0.5 text-xs font-medium text-[var(--text)]">
-            {categoryEmojis[category]} {category} +{bonusPct || "0"}% Lv.{level} × {quantity}
+          <span>Preview:</span>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--bg-input)] px-2.5 py-1 text-xs font-medium text-[var(--text)]">
+            <span>{categoryEmojis[category]}</span>
+            <span>{category.charAt(0)}{category.slice(1).toLowerCase()}</span>
+            <span className="text-[var(--green)]">+{bonusPct}%</span>
+            <span className="text-[var(--text-dim)]">Lv.{level}</span>
+            {quantity > 1 && <span className="text-[var(--accent-text)]">×{quantity}</span>}
           </span>
         </div>
 
@@ -205,17 +257,17 @@ export default function AddArtifactForm({ playerId, artifacts, onArtifactAdded }
         <button
           type="submit"
           disabled={saving}
-          className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-[var(--text)] hover:bg-[var(--accent-hover)] transition disabled:opacity-50"
+          className="rounded-lg bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-[var(--bg)] hover:opacity-90 transition disabled:opacity-50"
         >
           {saving ? "Adding…" : `Add ${quantity > 1 ? `${quantity} Artifacts` : "Artifact"}`}
         </button>
       </form>
 
-      {/* Current inventory */}
+      {/* Current inventory mini-display */}
       {artifacts.length > 0 && (
         <div>
           <h3 className="text-sm font-medium text-[var(--text)] mb-2">
-            Your Inventory ({artifacts.length} artifact{artifacts.length !== 1 ? "s" : ""})
+            Inventory ({artifacts.length} artifact{artifacts.length !== 1 ? "s" : ""})
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-1.5 sm:gap-2 max-h-48 sm:max-h-64 overflow-y-auto">
             {artifacts.map((art) => (
@@ -227,15 +279,15 @@ export default function AddArtifactForm({ playerId, artifacts, onArtifactAdded }
                   type="button"
                   onClick={(e) => handleDelete(art.id, e)}
                   disabled={deleting === art.id}
-                  className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-[var(--red-bg)] text-[var(--red)] text-xs font-bold opacity-0 group-hover:opacity-100 hover:!opacity-100 hover:bg-red-500/40 transition flex items-center justify-center disabled:opacity-50"
+                  className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-[var(--red-bg)] text-[var(--red)] text-xs font-bold opacity-0 group-hover:opacity-100 hover:!opacity-100 transition flex items-center justify-center disabled:opacity-50"
                   title="Delete artifact"
                 >
                   {deleting === art.id ? "…" : "×"}
                 </button>
                 <div className="text-sm">{categoryEmojis[art.category]}</div>
-                <div className="text-xs font-medium text-[var(--text)]">{art.category}</div>
+                <div className="text-xs font-medium text-[var(--text)]">{art.category.charAt(0)}{art.category.slice(1).toLowerCase()}</div>
                 <div className="text-xs text-[var(--text-muted)]">
-                  +{art.bonusPct}% Lv.{art.level}
+                  +{art.bonusPct}% · Lv.{art.level}
                 </div>
               </div>
             ))}
