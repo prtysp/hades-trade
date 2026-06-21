@@ -3,6 +3,7 @@ import { getCurrentPlayer } from "@/lib/auth";
 import ThemeSelector from "@/components/ThemeSelector";
 import OsNotificationToggle from "@/components/OsNotificationToggle";
 import PrivacyToggle from "@/components/PrivacyToggle";
+import ShareFormatEditor from "@/components/ShareFormatEditor";
 
 export default async function SettingsPage() {
   const player = await getCurrentPlayer();
@@ -111,6 +112,20 @@ export default async function SettingsPage() {
             field="showPreferences"
           />
         </div>
+      </div>
+
+      {/* Share Format section */}
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 sm:p-6">
+        <h2 className="text-lg sm:text-xl font-semibold text-[var(--text)] mb-4">Share Format</h2>
+        <p className="text-xs text-[var(--text-muted)] mb-4">
+          Customize the format used when you share a listing. Use the placeholders below to build your message.
+        </p>
+        <ShareFormatEditor
+          playerId={player.id}
+          initialFormat={player.shareFormat}
+          initialLabelOffer={player.shareLabelOffer}
+          initialLabelWant={player.shareLabelWant}
+        />
       </div>
     </div>
   );

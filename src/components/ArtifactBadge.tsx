@@ -28,14 +28,22 @@ export default function ArtifactBadge({ category, bonusPct, level, compact, coun
     );
   }
 
+  // Non-compact: grid layout
+  // Top-left: [count]x [emoji]   Top-right: L{level}
+  // Bottom-left: CATEGORY         Bottom-right: +{bonusPct}%
   return (
     <div className="rounded-lg border p-3" style={inlineStyle}>
       <div className="flex items-center justify-between">
-        <span className="text-lg">{categoryEmojis[category]}</span>
-        <span className="text-xs font-semibold opacity-70">L{level}{count && count > 1 ? ` x${count}` : ""}</span>
+        <div className="flex items-center gap-1.5">
+          {count && count > 1 && <span className="text-xs font-semibold opacity-70">{count}x</span>}
+          <span className="text-lg">{categoryEmojis[category]}</span>
+        </div>
+        <span className="text-xs font-semibold opacity-70">L{level}</span>
       </div>
-      <div className="mt-1 font-medium">{category}{count && count > 1 && <span className="text-xs opacity-70 ml-1">({count}x)</span>}</div>
-      <div className="text-sm opacity-80">+{bonusPct}% bonus</div>
+      <div className="mt-1.5 flex items-end justify-between">
+        <span className="font-medium text-sm">{category}</span>
+        <span className="text-xs font-semibold opacity-70">+{bonusPct}%</span>
+      </div>
     </div>
   );
 }
