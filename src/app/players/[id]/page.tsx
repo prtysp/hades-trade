@@ -315,6 +315,7 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
                     }
                   : undefined
               }
+              readOnly={!isOwnProfile}
             />
           </div>
         </div>

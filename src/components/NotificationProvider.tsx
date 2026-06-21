@@ -33,7 +33,7 @@ const POLL_INTERVAL = 15000;
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const { player } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
-  const [osNotificationsEnabled, setOsNotificationsEnabled] = useState(true);
+  const [osNotificationsEnabled, setOsNotificationsEnabled] = useState(false);
   const lastFetchRef = useRef(0);
   const prevCountRef = useRef(0);
   const { permission: osPermission, requestPermission: requestOsPermission, showNotification, clearShown } =
@@ -43,6 +43,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (player && typeof (player as any).osNotifications === "boolean") {
       setOsNotificationsEnabled((player as any).osNotifications);
+    } else if (!player) {
+      setOsNotificationsEnabled(false);
     }
   }, [player]);
 
@@ -62,7 +64,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         const newCount = data.length;
 
         // Show OS notification if count increased, browser permission granted, AND user preference enabled
-        if (newCount > prevCountRef.current && prevCountRef.current > 0 && osPermission === "granted" && osNotificationsEnabled) {
+        if (newCount > prevCountRef.current && osPermission === "granted" && osNotificationsEnabled) {
           const newNotifications = data.slice(0, newCount - prevCountRef.current);
           for (const n of newNotifications) {
             showNotification("Hades Star Trade", {
@@ -76,7 +78,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         setUnreadCount(newCount);
       }
     } catch { /* */ }
-  }, [player, osPermission, showNotification]);
+  }, [player, osPermission, showNotification, osNotificationsEnabled]);
 
   const refresh = useCallback(async () => {
     lastFetchRef.current = 0;
