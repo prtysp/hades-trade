@@ -28,9 +28,9 @@ function BonusInput({
         <button type="button" onClick={() => onChange(clamp(value - 100))} disabled={!canStep(-100)}
           className="h-9 w-10 rounded-l-lg border border-r-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed">−100%</button>
         <button type="button" onClick={() => onChange(clamp(value - 10))} disabled={!canStep(-10)}
-          className="h-9 w-10 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] transition disabled:opacity-25 disabled:cursor-not-allowed">−10%</button>
+          className="h-9 w-10 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed">−10%</button>
         <button type="button" onClick={() => onChange(clamp(value - 1))} disabled={!canStep(-1)}
-          className="h-9 w-9 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] transition disabled:opacity-25 disabled:cursor-not-allowed">−1%</button>
+          className="h-9 w-9 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed">−1%</button>
         {editing ? (
           <form onSubmit={(e) => { e.preventDefault(); applyDraft(); }} className="flex-1 min-w-0">
             <input ref={inputRef} type="number" step={1} min={min} max={max} value={draft} onChange={(e) => setDraft(e.target.value)} onBlur={applyDraft}
@@ -43,9 +43,9 @@ function BonusInput({
           </button>
         )}
         <button type="button" onClick={() => onChange(clamp(value + 1))} disabled={!canStep(1)}
-          className="h-9 w-9 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] transition disabled:opacity-25 disabled:cursor-not-allowed">+1%</button>
+          className="h-9 w-9 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed">+1%</button>
         <button type="button" onClick={() => onChange(clamp(value + 10))} disabled={!canStep(10)}
-          className="h-9 w-10 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] transition disabled:opacity-25 disabled:cursor-not-allowed">+10%</button>
+          className="h-9 w-10 border-y border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed">+10%</button>
         <button type="button" onClick={() => onChange(clamp(value + 100))} disabled={!canStep(100)}
           className="h-9 w-10 rounded-r-lg border border-l-0 border-[var(--border)] bg-[var(--bg-input)] text-[var(--text)] text-xs font-medium flex items-center justify-center hover:bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition disabled:opacity-25 disabled:cursor-not-allowed">+100%</button>
       </div>

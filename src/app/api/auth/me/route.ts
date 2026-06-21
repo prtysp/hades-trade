@@ -12,5 +12,14 @@ export async function GET() {
     id: player.id,
     username: player.username,
     corporation: player.corporation,
+    theme: player.theme,
+    font: player.font,
+    osNotifications: player.osNotifications,
+    showInventory: player.showInventory,
+    showListings: player.showListings,
+    showArchived: player.showArchived,
+    showPreferences: player.showPreferences,
+    discordUsername: player.discordUsername,
+    shareFormat: player.shareFormat,
   });
 }
