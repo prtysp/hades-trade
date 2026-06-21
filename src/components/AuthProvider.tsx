@@ -14,8 +14,6 @@ interface Player {
   showPreferences: boolean;
   discordUsername: string | null;
   shareFormat: string;
-  shareLabelOffer: string;
-  shareLabelWant: string;
 }
 
 interface AuthContextType {

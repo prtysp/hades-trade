@@ -123,8 +123,6 @@ export default async function SettingsPage() {
         <ShareFormatEditor
           playerId={player.id}
           initialFormat={player.shareFormat}
-          initialLabelOffer={player.shareLabelOffer}
-          initialLabelWant={player.shareLabelWant}
         />
       </div>
     </div>

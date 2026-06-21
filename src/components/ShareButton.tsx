@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { categoryEmojis } from "@/lib/artifact-styles";
 import { useAuth } from "@/components/AuthProvider";
 
@@ -49,30 +49,25 @@ export default function ShareButton({
 
   const typeLabel = priceType === "FREE" ? "Free" : priceType === "DONATION" ? "Donation" : "Trade";
 
-  // Use player's custom format or fall back to default
-  const template = player?.shareFormat || "{typeLine}{descriptionLine}{offeringLine}{wantingLine}{urlLine}";
-  const labelOffer = player?.shareLabelOffer || "Offering";
-  const labelWant = player?.shareLabelWant || "Wanting";
-
+  // Build the variable values
   const typeLine = `Type: ${typeLabel}`;
-  const descriptionLine = description ? `\n"${description}"` : "";
-  const offeringLine =
-    offering.length > 0
-      ? `\n${labelOffer}:\n${offering.map((o) => `  • ${formatArt(o)}`).join("\n")}`
-      : "";
-  const wantingLine =
-    wanting.length > 0
-      ? `\n${labelWant}:\n${wanting.map((w) => `  • ${formatArt(w)}`).join("\n")}`
-      : "";
-  const urlLine = `\n${shareUrl}`;
+  const descriptionLine = description ? `"${description}"` : "";
+  const offeringLine = offering.map((o) => formatArt(o)).join("\n");
+  const wantingLine = wanting.map((w) => formatArt(w)).join("\n");
+  const urlLine = shareUrl;
 
-  let shareText = template;
-  shareText = shareText.replace("{typeLine}", typeLine);
-  shareText = shareText.replace("{descriptionLine}", descriptionLine);
-  shareText = shareText.replace("{offeringLine}", offeringLine);
-  shareText = shareText.replace("{wantingLine}", wantingLine);
-  shareText = shareText.replace("{urlLine}", urlLine);
-  shareText = shareText.trim();
+  // Use player's custom format or fall back to default
+  const template = player?.shareFormat || `Offering: {offeringLine}\nWanting: {wantingLine}\n{urlLine}`;
+
+  const shareText = useMemo(() => {
+    let result = template;
+    result = result.replace(/{typeLine}/g, typeLine);
+    result = result.replace(/{descriptionLine}/g, descriptionLine);
+    result = result.replace(/{offeringLine}/g, offeringLine);
+    result = result.replace(/{wantingLine}/g, wantingLine);
+    result = result.replace(/{urlLine}/g, urlLine);
+    return result.trim();
+  }, [template, typeLine, descriptionLine, offeringLine, wantingLine, urlLine]);
 
   const copyToClipboard = async () => {
     try {

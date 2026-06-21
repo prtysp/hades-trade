@@ -19,9 +19,7 @@ model Player {
   showArchived   Boolean @default(false)
   showPreferences Boolean @default(false)
   discordUsername  String?
-  shareFormat     String   @default("{typeLine}{descriptionLine}{offeringLine}{wantingLine}{urlLine}")
-  shareLabelOffer String   @default("Offering")
-  shareLabelWant  String   @default("Wanting")
+  shareFormat     String   @default("Offering: {offeringLine}\nWanting: {wantingLine}\n{urlLine}")
   createdAt        DateTime @default(now())
   updatedAt     DateTime   @updatedAt
   artifacts     Artifact[]

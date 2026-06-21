@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { themeId, fontId, osNotifications, showInventory, showListings, showArchived, showPreferences, shareFormat, shareLabelOffer, shareLabelWant } = body;
+  const { themeId, fontId, osNotifications, showInventory, showListings, showArchived, showPreferences, shareFormat } = body;
 
   const data: Record<string, string | boolean> = {};
 
@@ -39,12 +39,6 @@ export async function POST(req: NextRequest) {
   }
   if (typeof shareFormat === "string") {
     data.shareFormat = shareFormat;
-  }
-  if (typeof shareLabelOffer === "string") {
-    data.shareLabelOffer = shareLabelOffer;
-  }
-  if (typeof shareLabelWant === "string") {
-    data.shareLabelWant = shareLabelWant;
   }
 
   if (Object.keys(data).length === 0) {
