@@ -32,9 +32,9 @@ export default function ArtifactBadge({ category, bonusPct, level, compact, coun
     <div className="rounded-lg border p-3" style={inlineStyle}>
       <div className="flex items-center justify-between">
         <span className="text-lg">{categoryEmojis[category]}</span>
-        <span className="text-xs font-semibold opacity-70">L{level}</span>
+        <span className="text-xs font-semibold opacity-70">L{level}{count && count > 1 ? ` x${count}` : ""}</span>
       </div>
-      <div className="mt-1 font-medium">{category}</div>
+      <div className="mt-1 font-medium">{category}{count && count > 1 && <span className="text-xs opacity-70 ml-1">({count}x)</span>}</div>
       <div className="text-sm opacity-80">+{bonusPct}% bonus</div>
     </div>
   );
