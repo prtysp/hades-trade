@@ -13,6 +13,7 @@ import TradeCard from "@/components/TradeCard";
 import ArchiveSection from "@/components/ArchiveSection";
 import { ArtifactProvider } from "@/components/ArtifactContext";
 import PlayerArtifactsClient from "@/components/PlayerArtifactsClient";
+import { categoryEmojis } from "@/lib/artifact-styles";
 import PlayerListingsClient from "@/components/PlayerListingsClient";
 
 export const dynamic = "force-dynamic";
@@ -301,22 +302,35 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
             ) : (
               <p className="mb-3 text-sm text-[var(--text-dim)]">No preference set.</p>
             )}
-            <PreferenceForm
-              playerId={id}
-              initial={
-                player.preference
-                  ? {
-                      categoryThresholds:
-                        player.preference.categoryThresholds.map((t) => ({
-                          category: t.category,
-                          minBonusPct: t.minBonusPct,
-                          minLevel: t.minLevel,
-                        })),
-                    }
-                  : undefined
-              }
-              readOnly={!isOwnProfile}
-            />
+            {isOwnProfile ? (
+              <PreferenceForm
+                playerId={id}
+                initial={
+                  player.preference
+                    ? {
+                        categoryThresholds:
+                          player.preference.categoryThresholds.map((t) => ({
+                            category: t.category,
+                            minBonusPct: t.minBonusPct,
+                            minLevel: t.minLevel,
+                          })),
+                      }
+                    : undefined
+                }
+              />
+            ) : (
+              <div className="space-y-2">
+                {player.preference?.categoryThresholds.map((t) => (
+                  <div key={t.category} className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
+                    <span>{categoryEmojis[t.category as keyof typeof categoryEmojis] || "?"}</span>
+                    <span className="font-medium text-[var(--text)]">{t.category.charAt(0)}{t.category.slice(1).toLowerCase()}</span>
+                    <span className="text-[var(--text-dim)]">—</span>
+                    <span>+{t.minBonusPct}%</span>
+                    <span>L{t.minLevel}+</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
